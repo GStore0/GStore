@@ -2,9 +2,12 @@ package com.aurora.store.patch.util
 
 import android.content.Context
 import android.util.Base64
+import android.util.Log
 import com.aurora.store.BuildConfig
 import com.aurora.store.R
 import com.aurora.store.patch.ConstantsPatch
+import com.aurora.store.patch.apps.ExternalAppsPatch
+import com.aurora.store.patch.morphe.MorphePatcher
 import com.aurora.store.patch.state.PatchProgressState
 import com.reandroid.apk.ApkModule
 import com.reandroid.app.AndroidManifest
@@ -15,6 +18,7 @@ import java.io.File
 import java.io.InputStream
 
 class Patcher(val context: Context, val packageName: String, val apkFiles: List<File>) {
+    val morphePatcher = MorphePatcher(context)
     private val progressMessages = apkFiles.flatMap {
         listOf(
             "Patching ${it.nameWithoutExtension}",
@@ -61,23 +65,34 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         val patchStepIndex = fileIndex * 2
         progressState.beginStep(patchStepIndex, progressMessages[patchStepIndex])
 
-        val apkModule = ApkModule.loadApkFile(originalApk)
+        var apkModule = ApkModule.loadApkFile(originalApk)
         if (!isBaseModule(apkModule) || signOnly) {
             apkModule.destroy()
             progressState.completeStep(patchStepIndex)
             return originalApk
         }
 
+        val sig = getSignatureBase64(apkModule)
+
+        apkModule = if (apkModule.packageName in ExternalAppsPatch.apps) {
+            apkModule.destroy()
+            val morphe = morphePatcher.patch(originalApk)
+            ApkModule.loadApkFile(morphe)
+        } else {
+            apkModule
+        }
+
         val patchedApk = File.createTempFile("patched_${System.currentTimeMillis()}", ".apk")
 
         try {
-            patchAndroidManifest(apkModule, getSignatureBase64(apkModule))
+            patchAndroidManifest(apkModule, sig)
             addPatchedDexToApk(apkModule)
             replaceMicroGProfiles(apkModule)
 
             apkModule.writeApk(patchedApk)
             apkModule.destroy()
         } catch (e: Exception) {
+            Log.e("Patcher", "Failed on ${originalApk.name}", e)
             progressState.failStep(patchStepIndex, e.message ?: "Failed on ${originalApk.name}")
         } finally {
             apkModule.destroy()

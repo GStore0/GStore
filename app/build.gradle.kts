@@ -214,6 +214,12 @@ dependencies {
     // Icons
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
 
+    // morphe
+    implementation("app.morphe:morphe-library:1.4.0:")
+    implementation("app.morphe:morphe-patcher:1.9.0") {
+        exclude(group = "com.github.REAndroid", module = "arsclib")
+    }
+
     // patcher
     implementation("io.github.reandroid:ARSCLib:1.4.0")
     implementation("com.android.tools.build:apksig:8.8.0")

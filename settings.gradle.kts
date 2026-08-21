@@ -19,7 +19,9 @@ dependencyResolutionManagement {
         // libsu is only available via jitpack
         maven("https://jitpack.io/") {
             content {
-                includeModule("com.github.topjohnwu.libsu", "core")
+                includeGroup("com.github.topjohnwu.libsu")
+                includeGroup("com.github.REAndroid")
+                includeGroup("com.github.MorpheApp.smali")
             }
         }
         // Only included in huawei variants
@@ -27,6 +29,20 @@ dependencyResolutionManagement {
             content {
                 includeGroup("com.huawei.hms")
                 includeGroup("com.huawei.android.hms")
+            }
+        }
+
+        maven {
+            // A repository must be specified for some reason. "registry" is a dummy.
+            url = uri("https://maven.pkg.github.com/MorpheApp/registry")
+            credentials {
+                val hardcodedUser = ""
+                val hardcodedToken = ""
+                val gprUser: String? = providers.gradleProperty("gpr.user").orNull
+                val gprKey: String? = providers.gradleProperty("gpr.key").orNull
+
+                username = (hardcodedUser.ifBlank { System.getenv("GITHUB_ACTOR") ?: gprUser })
+                password = (hardcodedToken.ifBlank { System.getenv("GITHUB_TOKEN") ?: gprKey })
             }
         }
     }

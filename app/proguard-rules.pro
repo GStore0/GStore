@@ -144,3 +144,9 @@
 -dontwarn android.**
 -keep class org.xmlpull.** { *; }
 -dontwarn org.xmlpull.**
+
+# morphe
+-dontwarn edu.umd.cs.findbugs.annotations.SuppressFBWarnings
+-keep class app.morphe.patcher.** { *; }
+-keep class com.android.tools.smali.** { *; }
+-keep class kotlin.** { *; }
