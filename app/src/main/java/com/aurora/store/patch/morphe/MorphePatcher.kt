@@ -4,13 +4,13 @@ import android.content.Context
 import android.util.Log
 import app.morphe.patcher.Patcher
 import app.morphe.patcher.PatcherConfig
+import app.morphe.patcher.apk.ApkMerger
 import app.morphe.patcher.apk.ApkUtils.applyTo
 import app.morphe.patcher.dex.BytecodeMode
 import app.morphe.patcher.patch.Patch
 import app.morphe.patcher.patch.loadPatchesFromDex
 import com.aurora.store.patch.data.Asset
 import com.aurora.store.patch.data.GitHubRelease
-import com.aurora.store.patch.util.Patcher.Companion.progressState
 import com.reandroid.apk.ApkModule
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -27,29 +27,24 @@ class MorphePatcher(
     private val baseApkFile = File(patcherDir, "original.apk").apply { delete() }
     private val workDir = File(patcherDir, "patch_${System.currentTimeMillis()}").apply { mkdirs() }
 
-    fun patch(apkFile: File): File {
-        val apkModule = ApkModule.loadApkFile(apkFile)
-        if (!apkModule.isBaseModule) {
-            apkModule.destroy()
-            return apkFile
-        }
-
+    fun patch(apksDir: File): File? {
         baseApkFile.delete()
-        apkFile.copyTo(baseApkFile, overwrite = true)
+        ApkMerger().merge(apksDir, baseApkFile)
 
         val patchBundle = downloadLatestPatchBundle()
-            ?: return apkFile
+            ?: return null
 
         val patches = loadPatchesFromDex(setOf(patchBundle))
+        val apkModule = ApkModule.loadApkFile(baseApkFile)
 
         val selectedPatches = selectPatches(
             patches = patches,
             packageName = apkModule.packageName,
-            versionName = apkModule.androidManifest.versionName,
+            versionName = null,
         )
 
         if (selectedPatches.isEmpty()) {
-            return apkFile
+            return null
         }
 
         return runCatching {
@@ -62,42 +57,7 @@ class MorphePatcher(
             outputFile
         }.onFailure {
             it.printStackTrace()
-        }.getOrDefault(apkFile)
-    }
-
-
-    fun patch(apkFiles: List<File>): List<File> {
-        val patchBundle = downloadLatestPatchBundle()
-            ?: return apkFiles
-
-        val patches = loadPatchesFromDex(setOf(patchBundle))
-
-        val baseApk = findAndCopyBaseApk(apkFiles)
-            ?: return apkFiles
-
-        val selectedPatches = selectPatches(
-            patches = patches,
-            packageName = baseApk.packageName,
-            versionName = baseApk.androidManifest.versionName,
-        )
-
-        if (selectedPatches.isEmpty()) {
-            return apkFiles
-        }
-
-        return runCatching {
-            applyPatches(
-                patches = selectedPatches,
-                workDir = workDir,
-                outputFile = outputFile
-            )
-
-            listOf(outputFile) + apkFiles.filterNot {
-                ApkModule.loadApkFile(it).isBaseModule
-            }
-        }.onFailure {
-            it.printStackTrace()
-        }.getOrDefault(apkFiles)
+        }.getOrDefault(null)
     }
 
     private fun downloadLatestPatchBundle(): File? {
@@ -182,15 +142,15 @@ class MorphePatcher(
                 patch.compatibility?.any { compatibility ->
                     compatibility.packageName == packageName &&
                             compatibility.targets.any { target ->
-                                target.version == versionName
+                                if (versionName == null) true else target.version == versionName
                             }
                 } ?: false
             }
             .filterNot { patch ->
                 patch.name?.contains("GmsCore", ignoreCase = true) == true
             }
-            .filter { patch ->
-                patch.name?.contains("Spoof video streams", ignoreCase = true) == true
+            .filterNot { patch ->
+                patch.name?.contains("Custom branding", ignoreCase = true) == true
             }
             .toSet()
     }

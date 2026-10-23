@@ -27,25 +27,42 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
     }
     var signOnly: Boolean = false
 
+    private val isExternalApp: Boolean
+        get() = packageName in ExternalAppsPatch.apps
+
+    private val patchDirectory: File
+        get() = File(requireApkParent(), "patch")
+
+    private val morpheDirectory: File
+        get() = File(requireApkParent(), "morphe")
+
     fun start(): List<File> {
-        val patchDir = File(apkFiles[0].parentFile, "patch").also { it.mkdirs() }
-        val isPatched = patchDir.listFiles()?.isNotEmpty() == true && apkFiles.size == patchDir.listFiles()?.size
-        if (isPatched) return patchDir.listFiles()!!.toList()
+        val outputDirectory = if (isExternalApp) morpheDirectory else patchDirectory
+        outputDirectory.mkdirs()
+
+        getCachedOutputs(outputDirectory)?.let { return it }
 
         progressState.start(packageName, progressMessages)
-        val patchedApks = mutableListOf<File>()
+        val signedApks = mutableListOf<File>()
 
-        apkFiles.forEachIndexed { fileIndex, originalApk ->
-            val outputFile = File(patchDir, originalApk.name)
+        try {
+            apkFiles.forEachIndexed { index, originalApk ->
+                val patchedApk = patchSingle(index, originalApk)
+                val signedApk = File(patchDirectory.apply { mkdirs() }, originalApk.name)
 
-            val patchedApk = patchSingle(fileIndex, originalApk)
-            signApk(fileIndex, patchedApk, outputFile)
-            patchedApks.add(outputFile)
+                signApk(index, patchedApk, signedApk)
+                signedApks += signedApk
+            }
+        } catch (e: Exception) {
+            progressState.finish()
+            throw e
         }
 
         progressState.finish()
 
-        return patchedApks
+        if (!isExternalApp) return signedApks
+
+        return applyMorphePatches(signedApks)
     }
 
     fun startWithReplace() {
@@ -53,6 +70,65 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         apkFiles.forEachIndexed { index, file ->
             file.delete()
             patchedApks[index].renameTo(file)
+        }
+    }
+
+    fun applyMorphePatch(apkFiles: List<File>): List<File> {
+        val patched = morphePatcher.patch(apkFiles.first().parentFile) ?: return apkFiles
+        return listOf(patched)
+    }
+
+    private fun applyMorphePatches(signedApks: List<File>): List<File> {
+        val messages = listOf("Applying Morphe patches...", "Signing patched APK...")
+        progressState.start(packageName, messages)
+
+        try {
+            progressState.beginStep(0, messages[0])
+            val patchedApk = applyMorphePatch(signedApks)
+                .firstOrNull()
+                ?: error("Morphe did not return an APK")
+            progressState.completeStep(0)
+
+            progressState.beginStep(1, messages[1])
+            val outputFile = File(morpheDirectory.apply { mkdirs() }, "$packageName.apk")
+            try {
+                ApkSignerHelper.signApk(context, patchedApk, outputFile)
+            } catch (e: Exception) {
+                progressState.failStep(1, e.message ?: "Failed to sign $packageName")
+                throw e
+            }
+            check(outputFile.isFile && outputFile.length() > 0L) {
+                "Signing did not produce an output APK: ${outputFile.absolutePath}"
+            }
+            progressState.completeStep(1)
+            return listOf(outputFile)
+        } finally {
+            progressState.finish()
+        }
+    }
+
+    private fun getCachedOutputs(directory: File): List<File>? {
+        val files = directory.listFiles()
+            ?.filter { it.isFile && it.extension.equals("apk", ignoreCase = true) }
+            ?.sortedBy { it.name }
+            ?: return null
+
+        if (files.isEmpty()) return null
+
+        return if (isExternalApp) {
+            files.singleOrNull { it.name == "$packageName.apk" }
+                ?.takeIf { it.length() > 0L }
+                ?.let(::listOf)
+        } else {
+            if (files.size != apkFiles.size) return null
+            val expectedNames = apkFiles.map { it.name }.toSet()
+            files.takeIf { it.map(File::getName).toSet() == expectedNames && it.all { file -> file.length() > 0L } }
+        }
+    }
+
+    private fun requireApkParent(): File {
+        return requireNotNull(apkFiles.firstOrNull()?.absoluteFile?.parentFile) {
+            "Could not determine APK parent directory"
         }
     }
 
@@ -73,14 +149,6 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         }
 
         val sig = getSignatureBase64(apkModule)
-
-        apkModule = if (apkModule.packageName in ExternalAppsPatch.apps) {
-            apkModule.destroy()
-            val morphe = morphePatcher.patch(originalApk)
-            ApkModule.loadApkFile(morphe)
-        } else {
-            apkModule
-        }
 
         val patchedApk = File.createTempFile("patched_${System.currentTimeMillis()}", ".apk")
 

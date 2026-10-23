@@ -216,12 +216,10 @@ dependencies {
 
     // morphe
     implementation("app.morphe:morphe-library:1.4.0:")
-    implementation("app.morphe:morphe-patcher:1.9.0") {
-        exclude(group = "com.github.REAndroid", module = "arsclib")
-    }
+    implementation("app.morphe:morphe-patcher:2.0.0")
 
     // patcher
-    implementation("io.github.reandroid:ARSCLib:1.4.0")
+    implementation("com.github.MorpheApp:ARSCLib:10d0708212")
     implementation("com.android.tools.build:apksig:8.8.0")
     implementation("org.bouncycastle:bcpkix-jdk18on:1.83")
 

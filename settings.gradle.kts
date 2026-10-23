@@ -32,6 +32,8 @@ dependencyResolutionManagement {
             }
         }
 
+        maven { url = uri("https://jitpack.io") }
+
         maven {
             // A repository must be specified for some reason. "registry" is a dummy.
             url = uri("https://maven.pkg.github.com/MorpheApp/registry")
