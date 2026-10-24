@@ -15,14 +15,6 @@ object InstallerBasePatch {
         if (packageName == context.packageName) return files
         val patcher = Patcher(context, packageName, files)
 
-        if (packageName in ExternalAppsPatch.apps) {
-            val needSign = !PackageUtil.isInstalled(context, packageName) || CertUtilPatch.isSignedByAuroraStore(context, packageName)
-            if (!needSign) return files
-
-            patcher.signOnly = true
-            return patcher.start()
-        }
-
         return patcher.start()
     }
 }
