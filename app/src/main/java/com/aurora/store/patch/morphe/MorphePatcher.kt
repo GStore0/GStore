@@ -11,7 +11,7 @@ import app.morphe.patcher.patch.Patch
 import app.morphe.patcher.patch.loadPatchesFromDex
 import com.aurora.store.patch.data.Asset
 import com.aurora.store.patch.data.GitHubRelease
-import com.reandroid.apk.ApkModule
+import com.aurora.store.util.Preferences
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -19,49 +19,78 @@ import org.json.JSONObject
 import java.io.File
 
 class MorphePatcher(
-    context: Context
+    val context: Context,
+    val packageName: String
 ) {
-    private val patcherDir = File(context.cacheDir, "patcher").apply { mkdirs() }
+    private val patcherDir = File(context.cacheDir, "morphe").apply { mkdirs() }
     private val patchFile = File(patcherDir, "patches.mpp")
-    private val outputFile = File(patcherDir, "output.apk").apply { delete() }
-    private val baseApkFile = File(patcherDir, "original.apk").apply { delete() }
-    private val workDir = File(patcherDir, "patch_${System.currentTimeMillis()}").apply { mkdirs() }
+    private val packageDir = File(patcherDir, packageName).apply { mkdirs() }
+    private val workDir = File(packageDir, "patch_${System.currentTimeMillis()}").apply { mkdirs() }
+    private val baseApkFile = File(packageDir, "original.apk").apply { delete() }
 
-    fun patch(apksDir: File): File? {
-        baseApkFile.delete()
-        ApkMerger().merge(apksDir, baseApkFile)
+    fun patch(apksDir: File, outputFile: File, onProgress: (String) -> Unit): File? {
+        try {
+            baseApkFile.delete()
 
-        val patchBundle = downloadLatestPatchBundle()
-            ?: return null
+            onProgress("Merging APKs...")
+            ApkMerger().merge(apksDir, baseApkFile)
 
-        val patches = loadPatchesFromDex(setOf(patchBundle))
-        val apkModule = ApkModule.loadApkFile(baseApkFile)
+            onProgress("Checking for patches...")
+            val patchBundle = getLatestPatchBundle()
+                ?: return null
 
-        val selectedPatches = selectPatches(
-            patches = patches,
-            packageName = apkModule.packageName,
-            versionName = null,
-        )
+            val patches = loadPatchesFromDex(setOf(patchBundle))
 
-        if (selectedPatches.isEmpty()) {
-            return null
-        }
-
-        return runCatching {
-            applyPatches(
-                patches = selectedPatches,
-                workDir = workDir,
-                outputFile = outputFile
+            val selectedPatches = selectPatches(
+                patches = patches,
+                packageName = packageName,
+                versionName = null,
             )
 
-            outputFile
-        }.onFailure {
-            it.printStackTrace()
-        }.getOrDefault(null)
+            if (selectedPatches.isEmpty()) {
+                return null
+            }
+
+            return runCatching {
+                applyPatches(
+                    patches = selectedPatches,
+                    workDir = workDir,
+                    outputFile = outputFile,
+                    onProgress
+                )
+
+                outputFile
+            }.onFailure {
+                it.printStackTrace()
+            }.getOrDefault(null)
+        } finally {
+            packageDir.deleteRecursively()
+        }
     }
 
-    private fun downloadLatestPatchBundle(): File? {
-        if (patchFile.exists() && patchFile.length() > 0) {
+    private fun isLatestPatchAvailable(): Boolean {
+        val currentVersion = Preferences.getString(context, "morphe_patch_version", "").takeIf { it.isNotEmpty() } ?: return true
+        val latestVersion = getLatestPatchVersion()
+        return currentVersion.compareTo(latestVersion) < 0
+    }
+
+    private fun getLatestPatchVersion(): String {
+        val client = OkHttpClient()
+        try {
+            val releaseJson = client.getText(RELEASE_URL)
+            val release = parseRelease(releaseJson)
+            return release.tag_name.substring(1)
+        } finally {
+            client.dispatcher.executorService.shutdown()
+        }
+    }
+
+    private fun isPatchAvailable(): Boolean {
+        return patchFile.exists() && patchFile.length() > 0
+    }
+
+    private fun getLatestPatchBundle(): File? {
+        if (isPatchAvailable() && isLatestPatchAvailable().not()) {
             return patchFile
         }
         val client = OkHttpClient()
@@ -80,6 +109,7 @@ class MorphePatcher(
             patchFile.writeBytes(patchBytes)
 
             Log.d(TAG, "Patches downloaded: ${patchFile.absolutePath}")
+            Preferences.putString(context, "morphe_patch_version", release.tag_name.substring(1))
             patchFile
         } catch (e: Exception) {
             e.printStackTrace()
@@ -117,20 +147,6 @@ class MorphePatcher(
         )
     }
 
-    private fun findAndCopyBaseApk(apkFiles: List<File>): ApkModule? {
-        for (file in apkFiles) {
-            val module = ApkModule.loadApkFile(file)
-
-            if (module.isBaseModule) {
-                baseApkFile.delete()
-                file.copyTo(baseApkFile, overwrite = true)
-                return module
-            }
-        }
-
-        return null
-    }
-
     private fun selectPatches(
         patches: Set<Patch<*>>,
         packageName: String,
@@ -158,45 +174,44 @@ class MorphePatcher(
     private fun applyPatches(
         patches: Set<Patch<*>>,
         workDir: File,
-        outputFile: File
+        outputFile: File,
+        onProgress: (String) -> Unit
     ) {
+        onProgress("Preparing...")
         workDir.mkdirs()
         outputFile.delete()
 
-        try {
-            val startTime = System.currentTimeMillis()
+        val startTime = System.currentTimeMillis()
 
-            val result = Patcher(
-                PatcherConfig(
-                    apkFile = baseApkFile,
-                    temporaryFilesPath = workDir,
-                    useBytecodeMode = BytecodeMode.STRIP_FAST
-                )
-            ).use { patcher ->
-                patcher += patches
+        val result = Patcher(
+            PatcherConfig(
+                apkFile = baseApkFile,
+                temporaryFilesPath = workDir,
+                useBytecodeMode = BytecodeMode.STRIP_FAST
+            )
+        ).use { patcher ->
+            patcher += patches
 
-                runBlocking {
-                    patcher().collect { result ->
-                        if (result.exception != null) {
-                            Log.i(TAG, "Apply: \"${result.patch}\" failed:\n${result.exception}")
-                        } else {
-                            Log.i(TAG, "Apply: \"${result.patch}\" succeeded")
-                        }
+            runBlocking {
+                patcher().collect { result ->
+                    if (result.exception != null) {
+                        Log.i(TAG, "Apply: \"${result.patch}\" failed:\n${result.exception}")
+                    } else {
+                        Log.i(TAG, "Apply: \"${result.patch}\" succeeded")
+                        onProgress("Applying: ${result.patch}")
                     }
                 }
-
-                patcher.get()
             }
-
-            result.applyTo(outputFile)
-
-            Log.d(
-                TAG,
-                "Patch finished: ${result.dexFiles}, ${result.resources}, ${System.currentTimeMillis() - startTime}ms"
-            )
-        } finally {
-            workDir.deleteRecursively()
+            onProgress("Repacking...")
+            patcher.get()
         }
+
+        result.applyTo(outputFile)
+
+        Log.d(
+            TAG,
+            "Patch finished: ${result.dexFiles}, ${result.resources}, ${System.currentTimeMillis() - startTime}ms"
+        )
     }
 
     private fun OkHttpClient.getText(url: String): String {

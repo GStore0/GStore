@@ -21,7 +21,7 @@ import java.io.InputStream
  * Avoid modifying the DEX to reduce patching time.
  */
 class Patcher(val context: Context, val packageName: String, val apkFiles: List<File>) {
-    val morphePatcher = MorphePatcher(context)
+    val morphePatcher = MorphePatcher(context, packageName)
     private val progressMessages = apkFiles.flatMap {
         listOf(
             "Patching ${it.nameWithoutExtension}",
@@ -76,8 +76,9 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         }
     }
 
-    fun applyMorphePatch(apkFiles: List<File>): List<File> {
-        val patched = morphePatcher.patch(apkFiles.first().parentFile) ?: return apkFiles
+    fun applyMorphePatch(apkFiles: List<File>, onProgress: (String) -> Unit = {}): List<File> {
+        val outputFile = File(morpheDirectory.apply { mkdirs() }, "$packageName-patched.apk")
+        val patched = morphePatcher.patch(apkFiles.first().parentFile, outputFile, onProgress) ?: return apkFiles
         return listOf(patched)
     }
 
@@ -87,9 +88,9 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
 
         try {
             progressState.beginStep(0, messages[0])
-            val patchedApk = applyMorphePatch(signedApks)
-                .firstOrNull()
-                ?: error("Morphe did not return an APK")
+            val patchedApk = applyMorphePatch(signedApks) {
+                progressState.updateStep(0, it)
+            }.firstOrNull() ?: error("Morphe did not return an APK")
             progressState.completeStep(0)
 
             progressState.beginStep(1, messages[1])

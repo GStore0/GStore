@@ -44,6 +44,11 @@ class PatchProgressState {
         currentMessage = message
     }
 
+    fun updateStep(index: Int, message: String) {
+        if (index !in steps.indices) return
+        currentMessage = message
+    }
+
     fun completeStep(index: Int) {
         if (index !in steps.indices) return
         steps[index] = steps[index].copy(status = StepStatus.DONE)
