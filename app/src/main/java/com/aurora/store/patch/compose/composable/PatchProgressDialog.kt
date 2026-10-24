@@ -72,11 +72,13 @@ fun PatchProgressDialog(packageName: String, displayName: String) {
                     ) {
                         when (step.status) {
                             StepStatus.DONE -> Icon(
-                                Icons.Filled.CheckCircle, contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                imageVector = Icons.Filled.CheckCircle, contentDescription = null,
                                 tint = Color(0xFF4CAF50)
                             )
                             StepStatus.FAILED -> Icon(
-                                Icons.Filled.Error, contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                imageVector = Icons.Filled.Error, contentDescription = null,
                                 tint = MaterialTheme.colorScheme.error
                             )
                             StepStatus.RUNNING -> CircularProgressIndicator(
@@ -84,7 +86,8 @@ fun PatchProgressDialog(packageName: String, displayName: String) {
                                 strokeWidth = 2.dp
                             )
                             StepStatus.PENDING -> Icon(
-                                Icons.Filled.RadioButtonUnchecked, contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                imageVector = Icons.Filled.RadioButtonUnchecked, contentDescription = null,
                                 tint = MaterialTheme.colorScheme.outline
                             )
                         }
