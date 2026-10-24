@@ -130,7 +130,6 @@ configure<ApplicationExtension> {
 
     productFlavors {
         create("vanilla") {
-            isDefault = true
             dimension = "device"
             buildConfigField("Boolean", "SHOW_ANONYMOUS_LOGIN", "true")
         }
@@ -150,6 +149,7 @@ configure<ApplicationExtension> {
 
         // This flavor is only for aosp devices without rooted devices make support for microG
         create("byd") {
+            isDefault = true
             dimension = "device"
             applicationIdSuffix = ".byd"
 
