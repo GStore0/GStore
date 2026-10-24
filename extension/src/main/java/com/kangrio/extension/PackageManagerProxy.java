@@ -7,7 +7,6 @@ import android.content.pm.IPackageManager;
 import android.content.pm.InstallSourceInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.SigningInfo;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
@@ -143,12 +142,12 @@ public class PackageManagerProxy extends Binder {
             return transactOriginal(code, data, reply, flags);
         }
 
-        PackageInfo packageInfo = getPackageInfoInternal(pkg, PackageManager.GET_META_DATA);
-        if (packageInfo == null || packageInfo.applicationInfo == null) {
+        PackageInfo packageInfoMetaData = getPackageInfoInternal(pkg, PackageManager.GET_META_DATA);
+        if (packageInfoMetaData == null || packageInfoMetaData.applicationInfo == null) {
             return transactOriginal(code, data, reply, flags);
         }
 
-        Bundle metaData = packageInfo.applicationInfo.metaData;
+        Bundle metaData = packageInfoMetaData.applicationInfo.metaData;
         if (metaData == null) {
             return transactOriginal(code, data, reply, flags);
         }
@@ -158,23 +157,21 @@ public class PackageManagerProxy extends Binder {
             return transactOriginal(code, data, reply, flags);
         }
 
-        packageInfo = Utils.spoofSignature(packageInfo, signatureData);
-
         /*
           Error: Parcelable encountered ClassNotFoundException reading a Serializable object (name = com.google.android.gms.org.conscrypt.OpenSSLRSAPublicKey)
           Fixed: provide only requested package info flags
          */
-        PackageInfo spoofedPackageInfo = getPackageInfoInternal(pkg, (int) flags2);
+        PackageInfo packageInfo = getPackageInfoInternal(pkg, (int) flags2);
         if ((flags2 & PackageManager.GET_SIGNATURES) != 0) {
-            spoofedPackageInfo.signatures = packageInfo.signatures;
+            packageInfo.signatures[0] = Utils.spoofSignature(packageInfo, signatureData);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && (flags2 & PackageManager.GET_SIGNING_CERTIFICATES) != 0) {
-            spoofedPackageInfo.signingInfo = packageInfo.signingInfo;
+            packageInfo.signingInfo = Utils.spoofSigningInfo(packageInfo, signatureData);
         }
 
         reply.writeNoException();
         reply.writeInt(1);
-        spoofedPackageInfo.writeToParcel(reply, Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
+        packageInfo.writeToParcel(reply, Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
         reply.setDataPosition(0);
         return true;
     }
@@ -208,10 +205,12 @@ public class PackageManagerProxy extends Binder {
         }
 
         // https://android.googlesource.com/platform/frameworks/base/+/main/core/java/android/content/pm/InstallSourceInfo.java#71
+        PackageInfo packageInfo = getPackageInfoInternal(PLAY_STORE_PACKAGE_NAME, PackageManager.GET_SIGNING_CERTIFICATES);
+        packageInfo.signingInfo = Utils.spoofSigningInfo(packageInfo, Utils.fakeGoogleSignatureData);
+
         Parcel newSource = Parcel.obtain();
-        SigningInfo signingInfo = Utils.getPlayStoreSigningInfo();
         newSource.writeString(PLAY_STORE_PACKAGE_NAME);                                   // mInitiatingPackageName
-        newSource.writeParcelable(signingInfo, Parcelable.PARCELABLE_WRITE_RETURN_VALUE); // mInitiatingPackageSigningInfo
+        newSource.writeParcelable(packageInfo.signingInfo, Parcelable.PARCELABLE_WRITE_RETURN_VALUE); // mInitiatingPackageSigningInfo
         newSource.writeString(PLAY_STORE_PACKAGE_NAME);                                   // mOriginatingPackageName
         newSource.writeString(PLAY_STORE_PACKAGE_NAME);                                   // mInstallingPackageName
         try {
