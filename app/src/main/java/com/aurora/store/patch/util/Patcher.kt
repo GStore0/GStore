@@ -6,12 +6,15 @@ import com.aurora.store.BuildConfig
 import com.aurora.store.R
 import com.aurora.store.patch.ConstantsPatch
 import com.aurora.store.patch.apps.ExternalAppsPatch
-import com.aurora.store.patch.morphe.MorphePatcher
+import com.aurora.store.patch.morphe.MorphePatcherRuntime
 import com.aurora.store.patch.state.PatchProgressState
 import com.aurora.store.util.Preferences
 import com.reandroid.apk.ApkModule
 import com.reandroid.app.AndroidManifest
 import com.reandroid.archive.ByteInputSource
+import com.reandroid.arsc.chunk.TableBlock
+import com.reandroid.arsc.chunk.xml.AndroidManifestBlock
+import com.reandroid.arsc.chunk.xml.ResXmlAttribute
 import com.reandroid.arsc.chunk.xml.ResXmlElement
 import com.reandroid.arsc.value.ValueType
 import java.io.File
@@ -20,8 +23,8 @@ import java.io.InputStream
 /**
  * Avoid modifying the DEX to reduce patching time.
  */
-class Patcher(val context: Context, val packageName: String, val apkFiles: List<File>) {
-    val morphePatcher = MorphePatcher(context, packageName)
+class Patcher(val context: Context, val packageName: String, val apkFiles: List<File>, val versionCode: Long) {
+    val morphePatcher = MorphePatcherRuntime(context, packageName)
     private val progressMessages = apkFiles.flatMap {
         listOf(
             "Patching ${it.nameWithoutExtension}",
@@ -31,7 +34,7 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
     var signOnly: Boolean = false
 
     private val isExternalApp: Boolean
-        get() = packageName in ExternalAppsPatch.apps
+        get() = packageName in ExternalAppsPatch.apps.keys
 
     private val patchDirectory: File
         get() = File(requireApkParent(), "patch")
@@ -70,16 +73,20 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
 
     fun startWithReplace() {
         val patchedApks = start()
-        apkFiles.forEachIndexed { index, file ->
-            file.delete()
+        apkFiles.forEach { file ->
+            val index = patchedApks.map { it.name }.indexOf(file.name)
             patchedApks[index].renameTo(file)
         }
     }
 
-    fun applyMorphePatch(apkFiles: List<File>, onProgress: (String) -> Unit = {}): List<File> {
-        val outputFile = File(morpheDirectory.apply { mkdirs() }, "$packageName-patched.apk")
-        val patched = morphePatcher.patch(apkFiles.first().parentFile, outputFile, onProgress) ?: return apkFiles
-        return listOf(patched)
+    fun applyMorphePatch(apkFiles: List<File>, onProgress: (String) -> Unit = {}): Map<Boolean, File> {
+        val baseFile = apkFiles.first { file ->
+            ApkModule.loadApkFile(file).use {
+                isBaseModule(it)
+            }
+        }
+        val outputFile = File(morpheDirectory.apply { mkdirs() }, baseFile.name)
+        return morphePatcher.patch(apkFiles.first().parentFile, outputFile, onProgress)
     }
 
     private fun applyMorphePatches(signedApks: List<File>): List<File> {
@@ -90,13 +97,19 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
             progressState.beginStep(0, messages[0])
             val patchedApk = applyMorphePatch(signedApks) {
                 progressState.updateStep(0, it)
-            }.firstOrNull() ?: error("Morphe did not return an APK")
-            progressState.completeStep(0)
+            }
+            val success = patchedApk.keys.first()
+            if (success) {
+                progressState.completeStep(0)
+            } else {
+                progressState.failStep(0, "Applying Morphe patches failed")
+            }
 
             progressState.beginStep(1, messages[1])
-            val outputFile = File(morpheDirectory.apply { mkdirs() }, "$packageName.apk")
+            val patchedApkFile = patchedApk.values.first()
+            val outputFile = File(morpheDirectory.apply { mkdirs() }, patchedApkFile.name)
             try {
-                ApkSignerHelper.signApk(context, patchedApk, outputFile)
+                ApkSignerHelper.signApk(context, patchedApkFile, outputFile)
             } catch (e: Exception) {
                 progressState.failStep(1, e.message ?: "Failed to sign $packageName")
                 throw e
@@ -104,10 +117,42 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
             check(outputFile.isFile && outputFile.length() > 0L) {
                 "Signing did not produce an output APK: ${outputFile.absolutePath}"
             }
+            val dummies = createDummy(outputFile.parentFile!!)
+
             progressState.completeStep(1)
-            return listOf(outputFile)
+            return listOf(outputFile) + dummies
         } finally {
             progressState.finish()
+        }
+    }
+
+    private fun createDummy(outputDirectory: File): List<File> {
+        val splits = apkFiles.filter { file ->
+            ApkModule.loadApkFile(file).use {
+                !isBaseModule(it)
+            }
+        }
+
+        return splits.map { split->
+            val outputFile = File(outputDirectory, split.name)
+            val apkModule = ApkModule()
+            val tableBlock = TableBlock()
+            val manifest = AndroidManifestBlock()
+            apkModule.tableBlock = tableBlock
+            apkModule.setManifest(manifest)
+
+            tableBlock.newPackage(0x7f, packageName)
+            manifest.packageName = packageName
+            manifest.versionCode = versionCode.toInt()
+            manifest.setSplitTypes("")
+            manifest.setSplit(outputFile.nameWithoutExtension, true)
+
+            manifest.setApplicationHasCode(false)
+
+            apkModule.writeApk(outputFile)
+            ApkSignerHelper.signApk(context, outputFile, outputFile)
+            apkModule.destroy()
+            outputFile
         }
     }
 
@@ -119,15 +164,8 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
 
         if (files.isEmpty()) return null
 
-        return if (isExternalApp) {
-            files.singleOrNull { it.name == "$packageName.apk" }
-                ?.takeIf { it.length() > 0L }
-                ?.let(::listOf)
-        } else {
-            if (files.size != apkFiles.size) return null
-            val expectedNames = apkFiles.map { it.name }.toSet()
-            files.takeIf { it.map(File::getName).toSet() == expectedNames && it.all { file -> file.length() > 0L } }
-        }
+        if (files.size != apkFiles.size) return null
+        return files.takeIf { it.all { file -> file.length() > 0L } }
     }
 
     private fun requireApkParent(): File {
@@ -378,4 +416,18 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
 
         val progressState = PatchProgressState()
     }
+}
+
+fun AndroidManifestBlock.setSplitTypes(type: String) {
+    val manifest = this.manifestElement
+    if (manifest != null) {
+        val attribute: ResXmlAttribute = manifest.getOrCreateAttribute(AndroidManifest.NAME_splitTypes, 0)
+        attribute.valueAsString = type
+    }
+}
+
+fun AndroidManifestBlock.setApplicationHasCode(hasCode: Boolean) {
+    val applicationElement = this.getOrCreateApplicationElement()
+    val hasCodeAttribute = applicationElement.getOrCreateAndroidAttribute("hasCode", android.R.attr.hasCode)
+    hasCodeAttribute.valueAsBoolean = hasCode
 }

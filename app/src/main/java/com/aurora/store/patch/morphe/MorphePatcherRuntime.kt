@@ -9,6 +9,7 @@ import app.morphe.patcher.apk.ApkUtils.applyTo
 import app.morphe.patcher.dex.BytecodeMode
 import app.morphe.patcher.patch.Patch
 import app.morphe.patcher.patch.loadPatchesFromDex
+import app.morphe.patcher.patch.mostCommonCompatibleVersions
 import com.aurora.store.patch.data.Asset
 import com.aurora.store.patch.data.GitHubRelease
 import com.aurora.store.util.Preferences
@@ -18,7 +19,7 @@ import okhttp3.Request
 import org.json.JSONObject
 import java.io.File
 
-class MorphePatcher(
+class MorphePatcherRuntime(
     val context: Context,
     val packageName: String
 ) {
@@ -28,18 +29,42 @@ class MorphePatcher(
     private val workDir = File(packageDir, "patch_${System.currentTimeMillis()}").apply { mkdirs() }
     private val baseApkFile = File(packageDir, "original.apk").apply { delete() }
 
-    fun patch(apksDir: File, outputFile: File, onProgress: (String) -> Unit): File? {
+    fun moveTo(from: File, destination: File): File {
+        from.renameTo(destination)
+        return destination
+    }
+
+    fun patch(apksDir: File, outputFile: File, onProgress: (String) -> Unit): Map<Boolean, File> {
+
+        var result = mapOf<Boolean, File>()
+        runBlocking {
+            result = applyPatch(apksDir, outputFile, onProgress)
+        }
+
+        return result
+    }
+
+    fun applyPatch(apksDir: File, outputFile: File, onProgress: (String) -> Unit): Map<Boolean, File> {
         try {
-            baseApkFile.delete()
+            packageDir.deleteRecursively()
 
             onProgress("Merging APKs...")
             ApkMerger().merge(apksDir, baseApkFile)
 
             onProgress("Checking for patches...")
             val patchBundle = getLatestPatchBundle()
-                ?: return null
+                ?: return mapOf(false to moveTo(baseApkFile, outputFile))
 
-            val patches = loadPatchesFromDex(setOf(patchBundle))
+            val patches = try {
+                patchBundle.setReadOnly()
+                loadPatchesFromDex(setOf(patchBundle), patchBundle.parentFile)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                return mapOf(false to moveTo(baseApkFile, outputFile))
+            } finally {
+                patchBundle.setWritable(true)
+            }
+
 
             val selectedPatches = selectPatches(
                 patches = patches,
@@ -48,7 +73,7 @@ class MorphePatcher(
             )
 
             if (selectedPatches.isEmpty()) {
-                return null
+                return mapOf(false to moveTo(baseApkFile, outputFile))
             }
 
             return runCatching {
@@ -59,13 +84,22 @@ class MorphePatcher(
                     onProgress
                 )
 
-                outputFile
+                mapOf(true to outputFile)
             }.onFailure {
                 it.printStackTrace()
-            }.getOrDefault(null)
+                moveTo(baseApkFile, outputFile)
+            }.getOrDefault(mapOf(false to outputFile))
         } finally {
             packageDir.deleteRecursively()
         }
+    }
+
+    private fun getCompatibleVersions(packageName: String): List<String> {
+        val patchBundle = getLatestPatchBundle() ?: return emptyList()
+        val patchesDex = loadPatchesFromDex(setOf(patchBundle))
+
+        val mostCommonCompatibleVersions = patchesDex.mostCommonCompatibleVersions(setOf(packageName))
+        return mostCommonCompatibleVersions[packageName]?.keys?.toList() ?: emptyList()
     }
 
     private fun isLatestPatchAvailable(): Boolean {
@@ -195,10 +229,11 @@ class MorphePatcher(
             runBlocking {
                 patcher().collect { result ->
                     if (result.exception != null) {
-                        Log.i(TAG, "Apply: \"${result.patch}\" failed:\n${result.exception}")
+                        Log.i(TAG, "Applying: \"${result.patch}\" failed:\n${result.exception}")
+                        onProgress("Applying: ${result.patch} failed, ${result.exception?.message}")
                     } else {
-                        Log.i(TAG, "Apply: \"${result.patch}\" succeeded")
-                        onProgress("Applying: ${result.patch}")
+                        Log.i(TAG, "Applying: \"${result.patch}\" succeeded")
+                        onProgress("Applying: ${result.patch} succeeded")
                     }
                 }
             }
@@ -250,5 +285,9 @@ class MorphePatcher(
         private const val TAG = "MorphePatcher"
         private const val RELEASE_URL =
             "https://api.github.com/repos/MorpheApp/morphe-patches/releases/latest"
+
+        fun latestCompatibleVersion(context: Context, packageName: String): String {
+            return MorphePatcherRuntime(context, packageName).getCompatibleVersions(packageName).first()
+        }
     }
 }

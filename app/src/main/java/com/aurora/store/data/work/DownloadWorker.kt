@@ -69,8 +69,8 @@ import kotlin.properties.Delegates
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
-import com.aurora.store.patch.apps.ExternalAppsPatch
 import com.aurora.store.patch.UtilPatch
+import com.aurora.store.patch.util.Patcher
 
 /**
  * An expedited long-running worker to download and trigger installation for given apps.
@@ -269,6 +269,10 @@ class DownloadWorker @AssistedInject constructor(
             return onFailure(VerificationFailedException())
         }
 
+        if (UtilPatch.isBydFlavour()) {
+            startPatch(download)
+        }
+
         Log.i(TAG, "Finished downloading & verifying ${download.packageName}")
         notifyStatus(DownloadStatus.COMPLETED)
 
@@ -316,7 +320,7 @@ class DownloadWorker @AssistedInject constructor(
         is SocketException,
         is SocketTimeoutException,
         is UnknownHostException,
-        // Expired URLs were re-purchased by clearing the file list; retrying re-fetches them.
+            // Expired URLs were re-purchased by clearing the file list; retrying re-fetches them.
         is ExpiredUrlException -> true
 
         else -> isRetryable(throwable.cause)
@@ -339,7 +343,7 @@ class DownloadWorker @AssistedInject constructor(
                 Log.w(
                     TAG,
                     "Transient failure for ${download.packageName}, " +
-                        "retrying (attempt $runAttemptCount)"
+                            "retrying (attempt $runAttemptCount)"
                 )
                 return@withContext Result.retry()
             }
@@ -735,6 +739,16 @@ class DownloadWorker @AssistedInject constructor(
             }
         } else if (dir.usableSpace < requiredBytes) {
             throw InsufficientStorageException()
+        }
+    }
+
+    private suspend fun startPatch(download: Download) {
+        withContext(Dispatchers.IO) {
+            if (download.packageName == context.packageName) return@withContext
+
+            val apksFile: List<File> = PathUtil.getAppDownloadDir(context, download.packageName, download.versionCode).listFiles()!!.toList()
+            val patcher = Patcher(context, download.packageName, apksFile, download.versionCode)
+            patcher.startWithReplace()
         }
     }
 }
