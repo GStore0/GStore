@@ -16,6 +16,7 @@ import com.aurora.store.util.Preferences
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
@@ -94,12 +95,35 @@ class MorphePatcherRuntime(
         }
     }
 
-    private fun getCompatibleVersions(packageName: String): List<String> {
-        val patchBundle = getLatestPatchBundle() ?: return emptyList()
+    private fun getCompatibleVersions(packageName: String): Map<Long, String> {
+        val patchBundle = getLatestPatchBundle() ?: return emptyMap()
         val patchesDex = loadPatchesFromDex(setOf(patchBundle))
 
         val mostCommonCompatibleVersions = patchesDex.mostCommonCompatibleVersions(setOf(packageName))
-        return mostCommonCompatibleVersions[packageName]?.keys?.toList() ?: emptyList()
+        val client = OkHttpClient()
+        try {
+            val versionsJson = client.getText("$VERSIONS_URL/$packageName.$JSON_EXTENSION")
+            val jsonArray = JSONArray(versionsJson)
+            val versions = mutableMapOf<Long, String>()
+            for (i in 0 until jsonArray.length()) {
+                val item = jsonArray.getJSONObject(i)
+
+                val versionName = item.getString("versionName")
+                val versionCode = item.getLong("versionCode")
+                versions[versionCode] = versionName
+            }
+
+            val filteredVersions = versions.filter {
+                it.value in (mostCommonCompatibleVersions[packageName]?.keys ?: emptySet())
+            }
+
+            return filteredVersions
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return emptyMap()
+        } finally {
+            client.dispatcher.executorService.shutdown()
+        }
     }
 
     private fun isLatestPatchAvailable(): Boolean {
@@ -285,9 +309,13 @@ class MorphePatcherRuntime(
         private const val TAG = "MorphePatcher"
         private const val RELEASE_URL =
             "https://api.github.com/repos/MorpheApp/morphe-patches/releases/latest"
+        private const val VERSIONS_URL = "https://raw.githubusercontent.com/kangrio/morphe-app-database/refs/heads/main"
+        private const val JSON_EXTENSION = "json"
 
-        fun latestCompatibleVersion(context: Context, packageName: String): String {
-            return MorphePatcherRuntime(context, packageName).getCompatibleVersions(packageName).first()
+        fun latestCompatibleVersion(context: Context, packageName: String): Map<String, Long> {
+            val sorted = MorphePatcherRuntime(context, packageName).getCompatibleVersions(packageName).toSortedMap()
+            if (sorted.isEmpty()) return emptyMap()
+            return mapOf(sorted.values.last() to sorted.keys.last())
         }
     }
 }

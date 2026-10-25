@@ -43,6 +43,9 @@ import com.aurora.store.data.room.favourite.FavouriteDao
 import com.aurora.store.data.room.review.LocalReview
 import com.aurora.store.data.room.review.LocalReview.Companion.toReview
 import com.aurora.store.data.room.review.ReviewDao
+import com.aurora.store.patch.UtilPatch
+import com.aurora.store.patch.apps.ExternalAppsPatch
+import com.aurora.store.patch.morphe.MorphePatcherRuntime
 import com.aurora.store.util.CertUtil
 import com.aurora.store.util.PackageUtil
 import com.aurora.store.util.Preferences
@@ -197,7 +200,9 @@ class AppDetailsViewModel @Inject constructor(
             try {
                 _app.value = appDetailsHelper.getAppByPackageName(packageName).copy(
                     isInstalled = PackageUtil.isInstalled(context, packageName)
-                )
+                ).let {
+                    return@let getMorpheVersion(it)
+                }
                 val existingDownload = downloadHelper.getDownload(packageName)
 
                 // A COMPLETED record for an app that is no longer installed means the app was
@@ -533,5 +538,17 @@ class AppDetailsViewModel @Inject constructor(
         val url = "${Constants.PLEXUS_API_URL}/$packageName/?scores=true"
         val playResponse = httpClient.get(url, emptyMap())
         return json.decodeFromString<PlexusReport>(String(playResponse.responseBytes))
+    }
+
+    private fun getMorpheVersion(app: App): App {
+        if (!UtilPatch.isBydFlavour()) return app
+        if (app.packageName !in ExternalAppsPatch.apps.keys) return app
+
+        val compatibleVersions = MorphePatcherRuntime.latestCompatibleVersion(context, app.packageName)
+        if (compatibleVersions.isEmpty()) return app
+        return app.copy(
+            versionName = compatibleVersions.keys.first(),
+            versionCode = compatibleVersions.values.first()
+        )
     }
 }
