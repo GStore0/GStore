@@ -64,6 +64,9 @@ abstract class BuildExtensionTask : DefaultTask() {
 
     @TaskAction
     fun run() {
+        fs.delete {
+            delete("../app/src/main/assets/patches")
+        }
         fs.copy {
             from("build/intermediates/dex/release/minifyReleaseWithR8/classes.dex")
             into("../app/src/main/assets/patches/dex")
