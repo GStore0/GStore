@@ -1,6 +1,7 @@
 package com.aurora.store.patch.morphe
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import app.morphe.patcher.Patcher
 import app.morphe.patcher.PatcherConfig
@@ -19,6 +20,13 @@ import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+
+private data class AppVersion(
+    val versionName: String,
+    val versionCode: Long,
+    val minSdk: Int,
+    val arch: String
+)
 
 class MorphePatcherRuntime(
     val context: Context,
@@ -99,28 +107,32 @@ class MorphePatcherRuntime(
         val patchBundle = getLatestPatchBundle() ?: return emptyMap()
         val patchesDex = loadPatchesFromDex(setOf(patchBundle))
 
-        val mostCommonCompatibleVersions = patchesDex.mostCommonCompatibleVersions(setOf(packageName))
+        val compatibleVersions = patchesDex.mostCommonCompatibleVersions(setOf(packageName))[packageName]?.keys ?: return emptyMap()
+
         val client = OkHttpClient()
-        try {
-            val versionsJson = client.getText("$VERSIONS_URL/$packageName.$JSON_EXTENSION")
-            val jsonArray = JSONArray(versionsJson)
-            val versions = mutableMapOf<Long, String>()
-            for (i in 0 until jsonArray.length()) {
-                val item = jsonArray.getJSONObject(i)
 
-                val versionName = item.getString("versionName")
-                val versionCode = item.getLong("versionCode")
-                versions[versionCode] = versionName
+        return try {
+            val jsonArray = JSONArray(client.getText("$VERSIONS_URL/$packageName.$JSON_EXTENSION"))
+
+            val versions = List(jsonArray.length()) { i ->
+                jsonArray.getJSONObject(i).let { item ->
+                    AppVersion(
+                        versionName = item.getString("versionName"),
+                        versionCode = item.getLong("versionCode"),
+                        minSdk = item.getInt("minSdk"),
+                        arch = item.getString("arch")
+                    )
+                }
             }
 
-            val filteredVersions = versions.filter {
-                it.value in (mostCommonCompatibleVersions[packageName]?.keys ?: emptySet())
-            }
-
-            return filteredVersions
+            versions.filter { version ->
+                version.versionName in compatibleVersions &&
+                        Build.VERSION.SDK_INT >= version.minSdk &&
+                        (version.arch in Build.SUPPORTED_64_BIT_ABIS || version.arch == "universal")
+            }.associate { it.versionCode to it.versionName }
         } catch (e: Exception) {
             e.printStackTrace()
-            return emptyMap()
+            emptyMap()
         } finally {
             client.dispatcher.executorService.shutdown()
         }
