@@ -226,7 +226,9 @@ class UpdateWorker @AssistedInject constructor(
                 .toMutableList()
 
             if (UtilPatch.isBydFlavour()) {
-                val updatesNew = updates.map { getMorpheVersion(it) }
+                val updatesNew = updates
+                    .map { getMorpheVersion(it) }
+                    .filter { PackageUtil.isUpdatable(context, it.packageName, it.versionCode) }
                 updates.clear()
                 updates.addAll(updatesNew)
             }
