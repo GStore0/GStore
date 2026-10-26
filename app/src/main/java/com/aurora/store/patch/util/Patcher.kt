@@ -6,7 +6,7 @@ import com.aurora.store.BuildConfig
 import com.aurora.store.R
 import com.aurora.store.patch.ConstantsPatch
 import com.aurora.store.patch.apps.ExternalAppsPatch
-import com.aurora.store.patch.morphe.MorphePatcherRuntime
+import com.aurora.store.patch.morphe.MorphePatcherBridge
 import com.aurora.store.patch.state.PatchProgressState
 import com.aurora.store.util.Preferences
 import com.reandroid.apk.ApkModule
@@ -24,7 +24,6 @@ import java.io.InputStream
  * Avoid modifying the DEX to reduce patching time.
  */
 class Patcher(val context: Context, val packageName: String, val apkFiles: List<File>, val versionCode: Long) {
-    val morphePatcher = MorphePatcherRuntime(context, packageName)
     private val progressMessages = apkFiles.flatMap {
         listOf(
             "Patching ${it.nameWithoutExtension}",
@@ -86,7 +85,7 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
             }
         }
         val outputFile = File(morpheDirectory.apply { mkdirs() }, baseFile.name)
-        return morphePatcher.patch(apkFiles.first().parentFile, outputFile, onProgress)
+        return MorphePatcherBridge.patch(context, packageName,apkFiles.first().parentFile, outputFile, onProgress)
     }
 
     private fun applyMorphePatches(signedApks: List<File>): List<File> {

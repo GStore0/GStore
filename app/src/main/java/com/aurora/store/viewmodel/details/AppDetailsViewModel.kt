@@ -45,7 +45,7 @@ import com.aurora.store.data.room.review.LocalReview.Companion.toReview
 import com.aurora.store.data.room.review.ReviewDao
 import com.aurora.store.patch.UtilPatch
 import com.aurora.store.patch.apps.ExternalAppsPatch
-import com.aurora.store.patch.morphe.MorphePatcherRuntime
+import com.aurora.store.patch.morphe.MorphePatcherBridge
 import com.aurora.store.util.CertUtil
 import com.aurora.store.util.PackageUtil
 import com.aurora.store.util.Preferences
@@ -544,7 +544,7 @@ class AppDetailsViewModel @Inject constructor(
         if (!UtilPatch.isBydFlavour()) return app
         if (app.packageName !in ExternalAppsPatch.apps.keys) return app
 
-        val compatibleVersions = MorphePatcherRuntime.latestCompatibleVersion(context, app.packageName)
+        val compatibleVersions = MorphePatcherBridge.latestCompatibleVersion(context, app.packageName)
         if (compatibleVersions.isEmpty()) return app
         return app.copy(
             versionName = compatibleVersions.keys.first(),

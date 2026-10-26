@@ -9,6 +9,7 @@ import app.morphe.patcher.apk.ApkMerger
 import app.morphe.patcher.apk.ApkUtils.applyTo
 import app.morphe.patcher.dex.BytecodeMode
 import app.morphe.patcher.patch.Patch
+import app.morphe.patcher.patch.PatchLoader
 import app.morphe.patcher.patch.loadPatchesFromDex
 import app.morphe.patcher.patch.mostCommonCompatibleVersions
 import com.aurora.store.patch.data.Asset
@@ -61,19 +62,7 @@ class MorphePatcherRuntime(
             ApkMerger().merge(apksDir, baseApkFile)
 
             onProgress("Checking for patches...")
-            val patchBundle = getLatestPatchBundle()
-                ?: return mapOf(false to moveTo(baseApkFile, outputFile))
-
-            val patches = try {
-                patchBundle.setReadOnly()
-                loadPatchesFromDex(setOf(patchBundle), patchBundle.parentFile)
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                return mapOf(false to moveTo(baseApkFile, outputFile))
-            } finally {
-                patchBundle.setWritable(true)
-            }
-
+            val patches = getLatestPatchDex() ?: return mapOf(false to moveTo(baseApkFile, outputFile))
 
             val selectedPatches = selectPatches(
                 patches = patches,
@@ -103,9 +92,8 @@ class MorphePatcherRuntime(
         }
     }
 
-    private fun getCompatibleVersions(packageName: String): Map<Long, String> {
-        val patchBundle = getLatestPatchBundle() ?: return emptyMap()
-        val patchesDex = loadPatchesFromDex(setOf(patchBundle))
+    fun getCompatibleVersions(packageName: String): Map<Long, String> {
+        val patchesDex = getLatestPatchDex() ?: return emptyMap()
 
         val compatibleVersions = patchesDex.mostCommonCompatibleVersions(setOf(packageName))[packageName]?.keys ?: return emptyMap()
 
@@ -157,6 +145,20 @@ class MorphePatcherRuntime(
 
     private fun isPatchAvailable(): Boolean {
         return patchFile.exists() && patchFile.length() > 0
+    }
+
+    private fun getLatestPatchDex(): PatchLoader.Dex? {
+        val patchBundle = getLatestPatchBundle() ?: return null
+        val patchesDex = try {
+            patchBundle.setReadOnly()
+            loadPatchesFromDex(setOf(patchBundle), patchBundle.parentFile)
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            return null
+        } finally {
+            patchBundle.setWritable(true)
+        }
+        return patchesDex
     }
 
     private fun getLatestPatchBundle(): File? {
@@ -323,11 +325,5 @@ class MorphePatcherRuntime(
             "https://api.github.com/repos/MorpheApp/morphe-patches/releases/latest"
         private const val VERSIONS_URL = "https://raw.githubusercontent.com/kangrio/morphe-app-database/refs/heads/main"
         private const val JSON_EXTENSION = "json"
-
-        fun latestCompatibleVersion(context: Context, packageName: String): Map<String, Long> {
-            val sorted = MorphePatcherRuntime(context, packageName).getCompatibleVersions(packageName).toSortedMap()
-            if (sorted.isEmpty()) return emptyMap()
-            return mapOf(sorted.values.last() to sorted.keys.last())
-        }
     }
 }

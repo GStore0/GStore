@@ -1,61 +1,55 @@
 package com.aurora.store.patch.morphe
 
-import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
-import androidx.core.content.ContextCompat
+import android.content.ServiceConnection
+import android.os.IBinder
+import com.aurora.services.patch.IMorpheService
+import com.aurora.services.patch.IProgressCallback
 import java.io.File
-
-
-class ResultReceiver(val onResult: (Boolean) -> Unit) : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        val action = intent.action
-        if (action != MorpheService.ACTION_RESULT) return
-        val success = intent.getBooleanExtra(MorpheService.EXTRA_SUCCESS, false)
-        onResult(success)
-    }
-}
-
-class ProgressReceiver(val onProgress: (String) -> Unit) : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        val action = intent.action
-        if (action != MorpheService.ACTION_PROGRESS) return
-        val progress = intent.getStringExtra(MorpheService.EXTRA_PROGRESS)
-        onProgress(progress ?: "")
-    }
-}
 
 class MorphePatcherBridge(
     val context: Context,
     val packageName: String
 ) {
-    fun patch(apksDir: File, outputFile: File, onProgress: (String) -> Unit): Map<Boolean, File> {
-        val intent = Intent(context, MorpheService::class.java)
-        intent.action = MorpheService.ACTION_PATCH
-        intent.putExtra(MorpheService.EXTRA_PACKAGE_NAME, packageName)
-        intent.putExtra(MorpheService.EXTRA_APKS_DIR, apksDir.absolutePath)
-        intent.putExtra(MorpheService.EXTRA_OUTPUT_FILE, outputFile.absolutePath)
-        context.startService(intent)
+    companion object {
+        var morpheService: IMorpheService? = null
+        val serviceConnection = object : ServiceConnection {
+            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+                morpheService = IMorpheService.Stub.asInterface(service)
+            }
 
-        var success = false
-        var wait = true
-        val progressReceiver = ProgressReceiver(onProgress)
-        val resultReceiver = ResultReceiver { success = it; wait = false }
-        registerForResult(progressReceiver, resultReceiver)
-        while (wait) {
-            Thread.sleep(1000)
+            override fun onServiceDisconnected(name: ComponentName?) {
+                morpheService = null
+            }
         }
-        context.unregisterReceiver(progressReceiver)
-        context.unregisterReceiver(resultReceiver)
 
-        return mapOf(success to outputFile)
-    }
+        private fun getService(context: Context): IMorpheService {
+            if (morpheService == null) {
+                context.bindService(Intent(context, MorpheService::class.java), serviceConnection, Context.BIND_AUTO_CREATE)
+                while (morpheService == null) {
+                    Thread.sleep(1000)
+                }
+            }
+            return morpheService!!
+        }
 
-    fun registerForResult(progressReceiver: ProgressReceiver, resultReceiver: ResultReceiver) {
-        val progressIntentFilter = IntentFilter(MorpheService.ACTION_PROGRESS)
-        val resultIntentFilter = IntentFilter(MorpheService.ACTION_RESULT)
-        ContextCompat.registerReceiver(context, progressReceiver, progressIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
-        ContextCompat.registerReceiver(context, resultReceiver, resultIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        fun patch(context: Context, packageName: String, apksDir: File, outputFile: File, onProgress: (String) -> Unit): Map<Boolean, File> {
+            val success = getService(context).startPatch(packageName, apksDir.absolutePath, outputFile.absolutePath, object : IProgressCallback.Stub() {
+                override fun onProgress(progress: String) {
+                    onProgress(progress)
+                }
+            })
+            return mapOf(success to outputFile)
+        }
+
+        fun latestCompatibleVersion(context: Context, packageName: String): Map<String, Long> {
+            val result = getService(context).getCompatibleVersions(packageName) as Map<Long, String>
+
+            val sorted = result.toSortedMap()
+            if (sorted.isEmpty()) return emptyMap()
+            return mapOf(sorted.values.last() to sorted.keys.last())
+        }
     }
 }
