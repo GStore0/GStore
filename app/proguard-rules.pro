@@ -150,3 +150,6 @@
 -keep class app.morphe.patcher.** { *; }
 -keep class com.android.tools.smali.** { *; }
 -keep class kotlin.** { *; }
+
+# Fix 'The main shell died during initialization'
+-keep class com.topjohnwu.** { *; }
