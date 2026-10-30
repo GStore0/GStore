@@ -25,11 +25,11 @@ object ApkMirror {
                     "$appSlug-$versionSlug-release/"
 
             val doc = Jsoup.connect(url)
-                .userAgent("APKUpdater-v3.0.3")
+                .userAgent("APKUpdater-v0.0.604")
                 .header("Accept", "text/html,application/xhtml+xml")
                 .header("Accept-Language", "en-US,en;q=0.9")
                 .referrer("https://www.apkmirror.com/")
-                .timeout(10_000)
+                .timeout(30_000)
                 .get()
 
             val rows = doc.select(".variants-table .table-row")
