@@ -37,7 +37,7 @@ object MorpheUtils {
         return try {
             val latestVersionName = MorpheApp.getLatestVersion(packageName, false) ?: return emptyMap()
             val latestVersionCode = runBlocking {
-                ApkMirror.getVersionCode("google-inc", appName, latestVersionName, "universal", Build.SUPPORTED_64_BIT_ABIS.first())
+                ApkMirror.getVersionCode("google-inc", appName, latestVersionName, "universal", Build.SUPPORTED_64_BIT_ABIS.toList())
             }
 
             latestVersionCode?.let { mapOf(latestVersionName to latestVersionCode) } ?: emptyMap()
