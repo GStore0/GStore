@@ -261,6 +261,7 @@ fun UpdatesScreen(
 
 private fun Download?.isActive(): Boolean {
     if (this == null) return false
+    if (isAwaitingInstall) return false
     return !isFinished || status == DownloadStatus.COMPLETED
 }
 

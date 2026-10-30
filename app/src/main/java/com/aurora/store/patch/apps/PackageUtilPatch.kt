@@ -15,7 +15,7 @@ object PackageUtilPatch {
         return when (currentInstaller) {
             Installer.ROOT -> AppInstaller.hasRootAccess()
             Installer.AM -> AppInstaller.hasAppManager(context)
-            Installer.SHIZUKU -> AppInstaller.hasShizukuOrSui(context) && AppInstaller.hasShizukuPerm()
+            Installer.SHIZUKU -> AppInstaller.hasShizukuOrSui(context) && AppInstaller.hasShizukuPerm(context)
             else -> false
         }
     }

@@ -605,4 +605,32 @@
     <string name="action_check">확인</string>
     <string name="installed_updated_at"><xliff:g id="when">%1$s</xliff:g> 업데이트함</string>
     <string name="action_buy">구매 %1$s</string>
+    <string name="account_exists">계정 이미 추가됨</string>
+    <string name="action_update_anyway">그래도 업데이트</string>
+    <string name="exodus_report_history">버전 내역</string>
+    <string name="exodus_history_version">%1$s (%2$s)</string>
+    <string name="exodus_history_subtitle">%1$s • 추적기 %2$d개</string>
+    <string name="exodus_latest">최신</string>
+    <string name="pref_updates_warn_trackers">앱 업데이트 시 새 추적기 경고</string>
+    <string name="pref_updates_warn_trackers_desc">설치한 버전에서는 없었던 추적기가 신규 버전에서 추가되었으면 업데이트하기 전에 경고 표시</string>
+    <string name="tracker_warning_title">새 추적기 감지됨</string>
+    <string name="tracker_warning_desc">이번 업데이트로 기존에 설치한 버전에서는 없었던 추적기가 추가됩니다:</string>
+    <string name="manual_download_lookup">버전 찾기</string>
+    <string name="manual_download_select_version">버전 선택</string>
+    <string name="manual_download_no_versions">버전을 찾을 수 없음</string>
+    <string name="manual_download_availability_warning">일부 버전은 다운로드할 수 없거나 기기와 호환되지 않을 수 있습니다.</string>
+    <string name="details_more_certificate_hash">인증서 해시</string>
+    <string name="action_free_up_space">공간 확보</string>
+    <string name="insufficient_storage_title">공간 부족</string>
+    <string name="insufficient_storage_desc">%1$s에는 %2$s만큼이 필요하지만, %3$s만 이용할 수 있습니다.</string>
+    <string name="insufficient_storage_hint">%1$s만큼 비우고 다시 시도하세요.</string>
+    <string name="status_awaiting_install">확인 대기 중</string>
+    <string name="notification_install_prompt_pending">눌러서 설치 마치기</string>
+    <string name="notification_none">확인할 것 없음</string>
+    <string name="details_more_files">파일</string>
+    <plurals name="insufficient_storage_desc_multiple">
+        <item quantity="other">앱 %1$d개에는 %2$s만큼이 필요하지만, %3$s만 이용할 수 있습니다.</item>
+    </plurals>
+    <string name="download_sort_date_downloaded">다운로드한 날짜</string>
+    <string name="installer_provider">%1$s · %2$s에서 처리</string>
 </resources>
