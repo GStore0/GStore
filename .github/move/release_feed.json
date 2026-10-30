@@ -1,0 +1,12 @@
+{
+  "version_name": "4.8.4-byd(1.0.4)",
+  "version_code": "76",
+  "download_url": "https://raw.githubusercontent.com/GStore0/GStore/refs/heads/move/aurorabydmove.apk",
+  "sha256": "2ada28ba50ac4f23985630902eeb479bddc773e52e3db002d9dc664a243065cc",
+  "icon_url": "https://raw.githubusercontent.com/GStore0/GStore/refs/heads/master/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+  "changelog": "project was moved to new package",
+  "size": "8091884",
+  "last_commit": "511133561",
+  "updated_on": "Oct 30, 2026",
+  "timestamp": "1793335453"
+}

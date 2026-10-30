@@ -1,0 +1,57 @@
+package com.kangrio.gstore.patch.util
+
+import android.content.Context
+import android.content.pm.PackageManager
+import android.widget.Toast
+import com.kangrio.gstore.Constants
+import com.kangrio.gstore.patch.ConstantsPatch
+import com.kangrio.gstore.util.IFlavouredUtil
+import com.kangrio.gstore.util.PackageUtil
+import com.kangrio.gstore.util.Preferences
+
+object FlavouredUtilPatch : IFlavouredUtil {
+
+    override val defaultDispensers = setOf(Constants.URL_DISPENSER)
+
+    override fun promptMicroGInstall(context: Context): Boolean {
+        if (!Preferences.getBoolean(context, Preferences.PREFERENCE_INTRO)) {
+            return false
+        }
+        val microGBundleInstalled  = isInstalledMicroGBundle(context)
+
+        if (microGBundleInstalled ) {
+            val gmsSupportsSpoofing = isCompatible(context, Constants.PACKAGE_NAME_GMS)
+            val playStoreSupportsSpoofing = isCompatible(context, Constants.PACKAGE_NAME_PLAY_STORE)
+            val isMicroGCompatible = gmsSupportsSpoofing && playStoreSupportsSpoofing
+
+            if (!isMicroGCompatible) {
+                val incompatibleComponents = buildList {
+                    if (!gmsSupportsSpoofing) add("MicroG Service")
+                    if (!playStoreSupportsSpoofing) add("MicroG Companion")
+                }.joinToString(" and ")
+                showToast(context, "$incompatibleComponents doesn't support certificate spoofing. Install a compatible version from this.")
+            }
+        }
+
+        return !microGBundleInstalled
+    }
+
+    private fun isInstalledMicroGBundle(context: Context): Boolean {
+        return PackageUtil.isInstalled(context, Constants.PACKAGE_NAME_GMS) &&
+                PackageUtil.isInstalled(context, Constants.PACKAGE_NAME_PLAY_STORE)
+    }
+
+    private fun isCompatible(context: Context, packageName: String): Boolean {
+        if (!PackageUtil.isInstalled(context, packageName)) return false
+
+        val supportsSpoofing = PackageUtil.getPackageInfo(context, packageName, PackageManager.GET_META_DATA)
+            .applicationInfo?.metaData
+            ?.containsKey(ConstantsPatch.META_DATA_SPOOFED_CERTIFICATES) == true
+
+        return supportsSpoofing
+    }
+
+    private fun showToast(context: Context, message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+    }
+}

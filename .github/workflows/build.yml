@@ -1,0 +1,158 @@
+
+name: Build and Publish
+
+on:
+  push:
+    tags:
+      - release
+      - nightly
+
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: Build type
+        required: true
+        type: choice
+        options:
+          - release
+          - nightly
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine build type
+        id: config
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            TYPE="${{ inputs.build_type }}"
+          else
+            TYPE="${GITHUB_REF_NAME}"
+          fi
+
+          if [[ "$TYPE" != "release" && "$TYPE" != "nightly" ]]; then
+            echo "Invalid build type: $TYPE"
+            exit 1
+          fi
+
+          echo "type=$TYPE" >> "$GITHUB_OUTPUT"
+
+      - name: Verify commit belongs to master
+        shell: bash
+        run: |
+          git fetch origin master
+
+          git merge-base --is-ancestor \
+            "$GITHUB_SHA" origin/master || {
+              echo "Commit does not belong to master"
+              exit 1
+            }
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/keystore.jks
+
+      - name: Create signing.properties
+        run: |
+          echo "STORE_FILE=keystore.jks" >> app/signing.properties
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> app/signing.properties
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> app/signing.properties
+
+      - name: Build APK
+        shell: bash
+        run: |
+          chmod +x gradlew
+
+          if [[ "${{ steps.config.outputs.type }}" == "nightly" ]]; then
+            ./gradlew :app:assembleVanillaNightly
+          else
+            ./gradlew :app:assembleVanillaRelease
+          fi
+
+      - name: Prepare APK
+        id: apk
+        shell: bash
+        env:
+          TYPE: ${{ steps.config.outputs.type }}
+        run: |
+          if [[ "$TYPE" == "nightly" ]]; then
+            SOURCE="app/build/outputs/apk/vanilla/nightly"
+            DEST="app/vanilla/nightly"
+          else
+            SOURCE="app/build/outputs/apk/vanilla/release"
+            DEST="app/vanilla/release"
+          fi
+
+          mkdir -p "$DEST"
+
+          shopt -s nullglob
+          APKS=("$SOURCE"/*.apk)
+
+          if [[ ${#APKS[@]} -eq 0 ]]; then
+            echo "No APK files found in $SOURCE"
+            exit 1
+          fi
+
+          for APK in "${APKS[@]}"; do
+            cp "$APK" "$DEST/"
+          done
+
+          echo "directory=$DEST" >> "$GITHUB_OUTPUT"
+
+          # Use the first APK for build metadata.
+          echo "apk=$DEST/$(basename "${APKS[0]}")" >> "$GITHUB_OUTPUT"
+
+      - name: Get APK version
+        id: apk_version
+        env:
+          APK_PATH: ${{ steps.apk.outputs.apk }}
+        run: |
+          VERSION_NAME=$(apkanalyzer manifest version-name "$APK_PATH")
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Generate build metadata
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name || inputs.build_type }}
+        run: |
+          python3 .github/scripts/generate_build_json.py \
+            "${{ steps.apk.outputs.apk }}" \
+            "${{ steps.config.outputs.type }}"
+
+      - name: Upload GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.apk_version.outputs.version_name }}
+          name: v${{ steps.apk_version.outputs.version_name }}
+          prerelease: ${{ steps.config.outputs.type == 'nightly' }}
+          generate_release_notes: true
+          files: |
+            ${{ steps.apk.outputs.directory }}/*.apk
+            release/${{ steps.config.outputs.type }}_build.json
+            .github/move/release_feed.json
+          fail_on_unmatched_files: true

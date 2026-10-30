@@ -59,3 +59,20 @@ path = "gradle/wrapper/**"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2007-2023 Gradle, Inc."
 SPDX-License-Identifier = "Apache-2.0"
+
+# Fork notice added by GStore
+[[annotations]]
+path = "NOTICE"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 KangRio"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# GStore logo artwork (binary renders of branding/gstore-logo.svg)
+[[annotations]]
+path = [
+    "app/src/**/mipmap-*/ic_launcher*.png",
+    "fastlane/metadata/android/en-US/images/icon.png",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 KangRio"
+SPDX-License-Identifier = "GPL-3.0-or-later"

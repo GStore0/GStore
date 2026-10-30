@@ -1,205 +1,236 @@
-# Aurora Store (BYD Variant)
+# GStore
 
-A custom build of Aurora Store tailored for BYD Android-based head units.
+**Android Apps Store for AOSP Devices Without Built-in GMS**
 
----
-![Stars](https://img.shields.io/github/stars/kangrio/AuroraStore-BYD) ![Forks](https://img.shields.io/github/forks/kangrio/AuroraStore-BYD) ![Downloads](https://img.shields.io/github/downloads/kangrio/AuroraStore-BYD/total) ![Release](https://img.shields.io/github/v/release/kangrio/AuroraStore-BYD)
+GStore is an open-source Android app store designed for non-root AOSP devices that do not include Google Mobile Services (GMS). It helps make Android apps work in environments where Google Play Services is unavailable by providing automatic microG compatibility patching.
 
-![Open Issues](https://img.shields.io/github/issues-raw/kangrio/AuroraStore-BYD) ![Closed Issues](https://img.shields.io/github/issues-closed-raw/kangrio/AuroraStore-BYD) ![License](https://img.shields.io/github/license/kangrio/AuroraStore-BYD) ![Last Commit](https://img.shields.io/github/last-commit/kangrio/AuroraStore-BYD)
+[Download Latest Release](https://github.com/GStore0/GStore/releases) · [Report an Issue](https://github.com/GStore0/GStore/issues) · [View Source Code](https://github.com/GStore0/GStore)
 
-## 🚀 How to Get Started
+> **GStore is a fork of [Aurora Store](https://gitlab.com/AuroraOSS/AuroraStore)** (GitHub mirror: [whyorean/AuroraStore](https://github.com/whyorean/AuroraStore)),
+> Copyright Aurora OSS, The Calyx Institute and contributors, licensed under **GPL-3.0-or-later**.
+> It has been modified and renamed; it is not affiliated with or endorsed by Aurora OSS.
+> See [NOTICE](NOTICE) for the list of modifications and [LICENSE](LICENSE) for the licence text.
 
-Follow these steps carefully to set up Aurora Store on your BYD head unit:
+## Overview
 
-1. **Uninstall MicroG** — If MicroG is already installed on your device, uninstall it first before proceeding.
-2. **Install this app** — Install Aurora Store (BYD Variant) on your BYD head unit.
-3. **Open the app & follow onboarding** — Launch the app and complete the onboarding setup (login with Google or anonymous account).
-4. **Install your first app** — Search and download any app from the store.
-5. **Install the MicroG bundle when prompted** — A popup will appear asking you to install the MicroG bundle. **You must install it**, otherwise no downloaded apps will be able to open.
-   - Once MicroG is installed, **tap "Install"** to proceed with installing the app you just downloaded.
-6. **Allow autostart for MicroG** — After your app is installed, go to your device's autostart settings and **enable autostart for both**:
-   - `MicroG Service`
-   - `MicroG Companion`
-7. **Open your app** — Launch the app you just installed and enjoy it on your BYD head unit.
-8. **Enjoy your drive! 🚗**
+Many Android devices use an AOSP-based operating system without Google Mobile Services. Apps that depend on Google Play Services may fail to launch or may have limited functionality on these devices.
 
-> [!IMPORTANT]
-> Skipping step 5 (MicroG bundle installation) or step 6 (autostart permissions) will prevent apps from launching correctly.
+GStore aims to improve compatibility by combining an open-source app store with automatic compatibility modifications and a compatible microG implementation.
 
----
+GStore is designed for:
 
-## ✨ Features
+- Non-root AOSP-based Android devices.
+- Devices without built-in Google Mobile Services.
+- Custom Android systems and Android head units.
+- Users who want to install Android apps without modifying the system partition.
+- Devices using a compatible microG implementation.
 
-* ✅ Automatic detection of MicroG
-* 📦 Prompt to install MicroG if not available
-* 🔧 Automatic patching of apps to support MicroG after download
-* 📲 Enables apps that normally require Google Mobile Services (GMS)
+The project was initially developed and tested on BYD DiLink Android head units, but it is not limited to BYD vehicles.
 
----
+## Features
 
-## ✅ Tested Apps (Working)
+- **App discovery and downloads** — Search for and download Android applications through the store.
+- **Automatic microG compatibility patching** — Modify supported applications to improve compatibility with microG.
+- **Rootless operation** — Perform supported patching and installation workflows without requiring root access.
+- **microG compatibility detection** — Detect whether a compatible microG environment is available.
+- **Guided setup** — Prompt users to install the required microG components when necessary.
+- **Native library patching** — Support compatibility modifications involving native libraries.
+- **Device compatibility support** — Help applications run in environments without built-in GMS.
 
-* Google Maps
-* Google Search
-* Google Gemini
-* Google News
-* Gmail
-* YouTube
-* YouTube Music
-* etc
+Compatibility modifications are applied where supported. Not every application can be made compatible with microG.
 
-✔ Basic functionality works
-✔ Login may work depending on MicroG setup
+## How It Works
 
----
+GStore combines an app store with a compatibility layer intended for AOSP devices without built-in GMS.
 
-## ❌ Tested Apps (Not Working Properly)
+1. Browse or search for an application.
+2. Download the application package.
+3. Check the availability of the required microG components.
+4. Apply supported compatibility modifications when needed.
+5. Install the resulting application.
+6. Launch the application and verify its functionality.
 
-* Netflix
+The exact workflow depends on the application, device, Android version, and available installation permissions.
 
-#### ⚠ Issue:
-* App crash
+GStore does not replace the Android operating system or automatically provide every Google service. It helps bridge compatibility gaps where supported.
 
-### Possible Reasons
+## Getting Started
 
-* Play Integrity / DRM enforcement
-* Streaming protection checks
-* Missing or limited Widevine support
+### Requirements
 
----
+- An Android device running an AOSP-based operating system.
+- No built-in Google Mobile Services required.
+- Network access to download applications and required components.
+- Permission to install applications from the selected source.
+- A compatible microG implementation for applications that require Google services.
 
-## ⚠️ Compatibility Warning
+Root access is not required for the supported installation and patching workflow.
 
-> Some apps may NOT work even after patching.
+### Installation
 
-Reasons include:
+1. Download the latest release from the [GStore Releases page](https://github.com/GStore0/GStore/releases).
+2. Install the GStore APK on your Android device.
+3. Open GStore and complete the initial setup.
+4. Configure your preferred supported account or download method.
+5. Search for an application and start the download.
+6. If prompted, install the compatible microG bundle supplied for GStore.
+7. Allow the required background-start or autostart permissions for the microG components if your device provides these settings.
+8. Install and launch the downloaded application.
 
-* Strong Play Integrity / SafetyNet checks
-* Hardcoded Google Play Services dependencies
-* Native (NDK) verification
-* DRM / streaming restrictions
+**Important:** Use the microG components compatible with GStore. Installing multiple conflicting implementations of Google Play Services or microG can cause unexpected behavior. If another implementation is already installed, resolve any package conflicts before proceeding.
 
-👉 You must test apps yourself. No guarantee of compatibility.
+On customized Android systems, additional manufacturer-specific settings may be necessary to keep background services running.
 
----
+## microG Compatibility
 
-## 🐛 Crash Reporting
+GStore is intended to support applications in environments that do not have the original Google Mobile Services framework.
 
-Every patched app includes optional crash reporting. **Crash reporting can be enabled or disabled from the settings.**
+Depending on the application, compatibility modifications may address issues involving:
 
-When crash reporting is enabled and a patched app crashes, crash information is automatically sent to the crash-reporting server and added to the existing GitHub issue for that app. This helps identify and troubleshoot crashes across different BYD devices and Android versions.
+- Google Play Services package detection.
+- Package signatures and certificate checks.
+- Installer-source verification.
+- Applications that expect specific GMS metadata.
+- Native libraries requiring supported compatibility handling.
 
-Crash reporting was added in [this commit](https://github.com/kangrio/AuroraStore-BYD/commit/1dbfe47c).
+These modifications do not reproduce the complete functionality of Google Play Services.
 
-The following information is included in each report:
+Some applications require additional services, proprietary components, device certification, Play Integrity, DRM, or server-side verification that cannot be resolved by patching alone.
 
-* **Android** — Android release version
-* **Build fingerprint** — device/build fingerprint
-* **Package** — application package name
-* **Version code** — installed app version code
-* **Version name** — installed app version name
-* **Report** — crash stack trace
+### Compatibility Notes
 
-Example:
+- Use the microG implementation supplied or recommended by the project.
+- Keep the compatible microG components installed and updated.
+- Enable autostart or background execution where required.
+- Reinstall an application after changing its compatibility configuration when necessary.
+- Test critical application features on your own device.
 
-```json
-{
-  "android": "12",
-  "buildfingerprint": "BYD AUTO/BYD-AUTO/BYD-AUTO:12/V417IR/320:user/release-keys",
-  "package": "com.example.app",
-  "versioncode": 123,
-  "versionname": "1.2.3",
-  "report": "java.lang.RuntimeException: ..."
-}
-```
+## Tested Applications
 
-Crash reports are used to help debug patched apps and improve compatibility with BYD Android head units. Users can disable crash reporting at any time from the app settings.
+The following applications have been tested or reported to work in the project's development environment. Functionality may vary by version and device.
 
----
+| Application | Compatibility notes |
+| --- | --- |
+| Google Maps | Basic functionality may work |
+| Google Search | Depends on the installed version and services |
+| Google Gemini | Depends on account, device, and service compatibility |
+| Google News | Depends on the installed version |
+| Gmail | Login and synchronization may vary |
+| YouTube | Some versions may require additional patching |
+| YouTube Music | Some versions may require additional patching |
 
-## 🚗 Tested Environment
+This list is informational, not a guarantee of compatibility on every AOSP device.
 
-* BYD Android Head Unit (DiLink system)
+Applications may stop working after updates, even if earlier versions worked correctly.
 
----
+## Known Limitations
 
-## 🛠 Known Limitations
+GStore cannot guarantee that every application will work on every device.
 
-* DRM-protected apps may fail
-* Streaming apps may stop playback
-* Push notifications may not work reliably
-* Google login may fail in some apps
-* Some patched apps may crash
+Potential limitations include:
 
----
+- Play Integrity or device certification requirements.
+- Applications that require proprietary Google services.
+- Native code that performs its own service or signature verification.
+- DRM-protected content and Widevine requirements.
+- Google account authentication restrictions.
+- Push notifications and background execution limitations.
+- Missing Android framework features or manufacturer-specific services.
+- Applications that require Android Automotive OS or other specialized system APIs.
 
-## 🔐 Disclaimer
+For example, applications designed specifically for Android Automotive OS may require car services that are not present on a standard AOSP installation.
 
-This project is for educational and personal use only.
+Compatibility depends on the application, Android version, device configuration, and microG implementation.
 
-* You are responsible for usage
-* Do not violate app terms of service
-* No warranty provided
+## Privacy and Security
 
----
+GStore is an open-source project. Users can inspect its source code and report potential security issues through the repository.
 
-## 📌 Notes
+Please keep the following in mind:
 
-* Keep MicroG updated
-* Reinstall apps if patching fails
-* Clear app data if issues occur
+- Applications downloaded through the store are developed and maintained by their respective publishers.
+- Compatibility patching may change application behavior.
+- Installing APK files from any source carries security risks.
+- Only install applications you trust.
+- Review application permissions before granting access.
+- Disable optional crash reporting if you do not want diagnostic information sent to the project.
+- Do not assume that an application is secure or fully functional simply because it installs successfully.
 
----
+GStore does not guarantee the security, availability, or continued compatibility of third-party applications.
 
-## 🚧 Future Improvements
+## Troubleshooting
 
-* WIP
+### An application will not launch
 
----
+1. Confirm that the required microG components are installed.
+2. Check whether another Google Play Services or microG implementation conflicts with the installed components.
+3. Verify that background execution is allowed.
+4. Reinstall the application using GStore.
+5. Check the application logs and existing [GitHub issues](https://github.com/GStore0/GStore/issues).
 
-## 🌟 Awesome Apps for BYD Head Units
+### An application crashes after patching
 
-A curated list of apps and tools that work great on BYD Android head units (DiLink).
+The application may use unsupported APIs, native verification, DRM, or other services that cannot be handled by the current compatibility patches.
 
-### 🎙️ AI & Voice Assistants
+Check existing issues before reporting the problem.
 
-| App                 | Description                                                                                                                                                                 | Link                                                      |
-|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
-| **Assistant (BYD)** | AI voice assistant launcher with offline wake-word detection ("Hey Rio", "Alexa"), one-tap launch for Google Assistant / ChatGPT / Claude, and BYD DiLink onboarding wizard | [kangrio/Assistant](https://github.com/kangrio/Assistant) |
-| **Google / Gemini** | Google's AI assistant and multimodal AI — search, navigation, smart home control                                                                                            | Available via Aurora Store                                |
-| **ChatGPT**         | OpenAI's conversational AI with voice mode                                                                                                                                  | Available via Aurora Store                                |
+### Google login does not work
 
-### 🗺️ Navigation
+Account authentication depends on the application, microG configuration, device environment, and Google's current requirements. Successful installation does not guarantee successful authentication.
 
-| App             | Description                                                                       | Link                       |
-|-----------------|-----------------------------------------------------------------------------------|----------------------------|
-| **Google Maps** | Full-featured navigation and maps                                                 | Available via Aurora Store |
-| **Waze**        | Community-based traffic and navigation                                            | Available via Aurora Store |
-| **Radarbot**    | Speed camera & radar detector — supported version **8.8.4 (build 189) and below** | Available via Aurora Store |
+### An application stops working after an update
 
-### 🎵 Media & Entertainment
+A new version may introduce additional dependencies or change its verification behavior. Try to identify the affected application version and provide a crash report if optional crash reporting is enabled.
 
-| App               | Description                 | Link                       |
-|-------------------|-----------------------------|----------------------------|
-| **YouTube**       | Video streaming             | Available via Aurora Store |
-| **YouTube Music** | Music streaming from Google | Available via Aurora Store |
+## Reporting Issues
 
-### 📧 Productivity
+If you encounter a problem, open an issue in the repository:
 
-| App             | Description            | Link                       |
-|-----------------|------------------------|----------------------------|
-| **Gmail**       | Google email client    | Available via Aurora Store |
-| **Google News** | Personalized news feed | Available via Aurora Store |
+[GitHub Issues](https://github.com/GStore0/GStore/issues)
 
-> [!TIP]
-> Use **[Assistant (BYD)](https://github.com/kangrio/Assistant)** to quickly launch any of these AI apps with a custom wake word — no screen tapping needed while driving.
+Include the following information when possible:
 
----
+- Android version.
+- Device model and system version.
+- GStore version.
+- Application name and version.
+- Whether microG is installed and working.
+- Steps to reproduce the problem.
+- Relevant logs or crash traces.
 
-### 🙏 Credits
+Remove personal information, authentication tokens, and other sensitive data before sharing logs.
 
-- [Aurora Store (official)](https://github.com/whyorean/AuroraStore) An unofficial FOSS client to Google Play.
-- [ARSCLib](https://github.com/REAndroid/ARSCLib) Android binary resources read/write library
-- [AndroidHiddenApiBypass](https://github.com/LSPosed/AndroidHiddenApiBypass) LSPass: Bypass restrictions on non-SDK interfaces
+Please search existing issues before creating a new report.
 
----
+## Project Status
+
+GStore is an evolving open-source project. Features, compatibility patches, and supported application versions may change as development continues.
+
+Contributions, bug reports, testing, and compatibility feedback are welcome.
+
+## Credits
+
+GStore builds upon the work of existing open-source projects, including:
+
+- [Aurora Store](https://github.com/whyorean/AuroraStore) — The upstream app store project.
+- [ARSCLib](https://github.com/REAndroid/ARSCLib) — Android resource manipulation library.
+- [AndroidHiddenApiBypass](https://github.com/LSPosed/AndroidHiddenApiBypass) — Access to restricted Android APIs.
+- [microG](https://github.com/microg) — Open-source implementations of selected Google services.
+
+See the project's source code, license files, and third-party notices for additional attribution and licensing information.
+
+## License
+
+GStore is based on Aurora Store and incorporates third-party open-source components.
+
+Refer to the repository's [LICENSE](https://github.com/GStore0/GStore/blob/master/LICENSE), [LICENSES directory](https://github.com/GStore0/GStore/tree/master/LICENSES), and applicable third-party licenses for the terms governing the code and included components.
+
+## Disclaimer
+
+GStore is an independent, community-developed project. It is not affiliated with, endorsed by, or sponsored by Google, Google Play, microG, or the developers of applications downloaded through the store.
+
+GStore does not own or guarantee the availability of third-party applications or services accessed through it.
+
+All trademarks and application names belong to their respective owners.
+
+Use the software at your own risk. The developers provide no guarantee that any particular application, service, or compatibility modification will work on your device.

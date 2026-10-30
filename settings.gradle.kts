@@ -19,9 +19,7 @@ dependencyResolutionManagement {
         // libsu is only available via jitpack
         maven("https://jitpack.io/") {
             content {
-                includeGroup("com.github.topjohnwu.libsu")
-                includeGroup("com.github.REAndroid")
-                includeGroup("com.github.MorpheApp.smali")
+                includeModule("com.github.topjohnwu.libsu", "core")
             }
         }
         // Only included in huawei variants
@@ -52,4 +50,4 @@ dependencyResolutionManagement {
 include(":app")
 include(":extension")
 include(":extension:stub")
-rootProject.name = "AuroraStore4"
+rootProject.name = "GStore"

@@ -49,7 +49,7 @@ kotlin {
 }
 
 configure<ApplicationExtension> {
-    namespace = "com.aurora.store"
+    namespace = "com.kangrio.gstore"
     compileSdk {
         version = release(37) {
             minorApiLevel = 0
@@ -57,7 +57,7 @@ configure<ApplicationExtension> {
     }
 
     defaultConfig {
-        applicationId = "com.aurora.store"
+        applicationId = "com.kangrio.gstore"
         minSdk {
             version = release(23)
         }
@@ -65,14 +65,22 @@ configure<ApplicationExtension> {
             version = release(37)
         }
 
-        versionCode = 76
-        versionName = "4.8.4"
+        val patchVersionCode = 4
+        val baseVersionCode = 76
+        val baseVersionName = "4.8.4"
 
-        testInstrumentationRunner = "com.aurora.store.HiltInstrumentationTestRunner"
+        versionCode = 1
+        versionName = "1.0.0"
+
+        testInstrumentationRunner = "com.kangrio.gstore.HiltInstrumentationTestRunner"
         testInstrumentationRunnerArguments["disableAnalytics"] = "true"
 
         buildConfigField("String", "EXODUS_API_KEY", "\"bbe6ebae4ad45a9cbacb17d69739799b8df2c7ae\"")
         buildConfigField("long", "BUILD_TIMESTAMP", "${lastCommitTimestamp.get()}L")
+        buildConfigField("String", "BASE_APPLICATION_ID", "\"com.aurora.store\"")
+        buildConfigField("String", "BASE_VERSION_NAME", "\"$baseVersionName\"")
+        buildConfigField("int", "BASE_VERSION_CODE", "$baseVersionCode")
+        buildConfigField("int", "PATCH_VERSION_CODE", "$patchVersionCode")
 
         missingDimensionStrategy("device", "vanilla")
     }
@@ -129,6 +137,7 @@ configure<ApplicationExtension> {
 
     productFlavors {
         create("vanilla") {
+            isDefault = true
             dimension = "device"
             buildConfigField("Boolean", "SHOW_ANONYMOUS_LOGIN", "true")
         }
@@ -144,26 +153,6 @@ configure<ApplicationExtension> {
             dimension = "device"
             versionNameSuffix = "-preload"
             buildConfigField("Boolean", "SHOW_ANONYMOUS_LOGIN", "true")
-        }
-
-        // This flavor is only for aosp devices without rooted devices make support for microG
-        create("byd") {
-            isDefault = true
-            dimension = "device"
-            applicationIdSuffix = ".byd"
-
-            // 1-9 -> 0.0.X, 10-99 -> 0.X.X, 100-999 -> X.X.X, 1000+ -> XX.X.X
-            val bydVersionCode = 103
-            val major = bydVersionCode / 100
-            val minor = (bydVersionCode / 10) % 10
-            val patch = bydVersionCode % 10
-            val bydVersionName = "byd($major.$minor.$patch)"
-
-            versionNameSuffix = "-$bydVersionName"
-            buildConfigField("Boolean", "SHOW_ANONYMOUS_LOGIN", "true")
-
-            val patchVersionCode = 3
-            buildConfigField("int", "PATCH_VERSION_CODE", "$patchVersionCode")
         }
     }
 
@@ -218,6 +207,7 @@ dependencies {
     // morphe
     implementation("app.morphe:morphe-library:1.4.0:")
     implementation("app.morphe:morphe-patcher:2.0.0")
+    implementation("org.jsoup:jsoup:1.23.2")
 
     // Markdown
     implementation("org.jetbrains:markdown:0.7.9")

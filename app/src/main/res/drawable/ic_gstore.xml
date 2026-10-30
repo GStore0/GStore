@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-FileCopyrightText: 2026 KangRio
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
+  -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="1.7"
+        android:scaleY="1.7">
+    <path
+        android:pathData="M71.62,39.22A23,23 0 1 0 77,54"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="10" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M57,50.5H85V57.5H57Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M44,46H54A3,3 0 0 1 57,49V59A3,3 0 0 1 54,62H44A3,3 0 0 1 41,59V49A3,3 0 0 1 44,46Z M43.5,48.5h4.5v4.5h-4.5z M50,48.5h4.5v4.5h-4.5z M43.5,55h4.5v4.5h-4.5z M50,55h4.5v4.5h-4.5z" />
+    </group>
+</vector>

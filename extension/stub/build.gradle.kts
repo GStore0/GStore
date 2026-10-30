@@ -8,7 +8,7 @@ android {
         version = release(36)
     }
     defaultConfig {
-        minSdk = 24
+        minSdk = 23
     }
     buildFeatures {
         aidl = true

@@ -1,0 +1,127 @@
+package com.kangrio.gstore.patch.apps.update
+
+
+import com.kangrio.gstore.Constants.PACKAGE_NAME_GMS
+import com.kangrio.gstore.Constants.PACKAGE_NAME_PLAY_STORE
+import com.aurora.gplayapi.data.models.PlayFile
+import com.aurora.gplayapi.data.serializers.LocaleSerializer
+import com.aurora.gplayapi.data.serializers.PropertiesSerializer
+import com.kangrio.gstore.data.room.suite.ExternalApk
+import com.kangrio.gstore.patch.data.GitHubRelease
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.contextual
+import okhttp3.OkHttpClient
+import okhttp3.Request
+
+class MicroGUpdate {
+    companion object {
+        private const val ICON_BASE_URL = "https://raw.githubusercontent.com/microg"
+        private const val ICON_FILE_PATH = "src/main/res/mipmap-xxxhdpi/ic_app.png"
+
+        private val json: Json = Json {
+            prettyPrint = true
+            ignoreUnknownKeys = true
+            coerceInputValues = true
+            serializersModule = SerializersModule {
+                contextual(LocaleSerializer)
+                contextual(PropertiesSerializer)
+            }
+            explicitNulls = false
+        }
+
+        fun getLatestRelease(): GitHubRelease {
+            val client = OkHttpClient()
+
+            try {
+                val request = Request.Builder()
+                    .url("https://api.github.com/repos/microg/GmsCore/releases/latest")
+                    .addHeader("Accept", "*/*")
+                    .addHeader("User-Agent", "request")
+                    .build()
+
+                val response = client.newCall(request).execute()
+                val body = response.body.string()
+
+                return json.decodeFromString<GitHubRelease>(body)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return GitHubRelease()
+            } finally {
+                client.dispatcher.executorService.shutdown()
+            }
+        }
+
+        fun getUpdate(packageName: String, githubRelease: GitHubRelease): ExternalApk? {
+            return when(packageName) {
+                PACKAGE_NAME_GMS -> {
+                    getMicroGApk(githubRelease)
+                }
+
+                PACKAGE_NAME_PLAY_STORE -> {
+                    getCompanionApk(githubRelease)
+                }
+
+                else -> null
+            }
+        }
+
+        fun getMicroGApk(githubRelease: GitHubRelease) : ExternalApk {
+            val latestGms = githubRelease.assets
+                .filter { it.name.contains(PACKAGE_NAME_GMS) }
+                .filter { it.name.endsWith(".apk") }
+                .first { !it.name.contains("hw") }
+
+
+            return ExternalApk(
+                packageName = PACKAGE_NAME_GMS,
+                versionCode = latestGms.name.removeSuffix(".apk").split("-").last().toLong(),
+                versionName = githubRelease.tag_name,
+                displayName = "microG Services",
+                iconURL = "$ICON_BASE_URL/GmsCore/refs/heads/master/play-services-core/$ICON_FILE_PATH",
+                developerName = "microG Team",
+                fileList =  listOf(
+                    PlayFile(
+                        url = latestGms.browser_download_url,
+                        name = latestGms.name,
+                        size = latestGms.size,
+                        sha256 = latestGms.sha256
+                    )
+                )
+            )
+        }
+
+        fun getCompanionApk(githubRelease: GitHubRelease) : ExternalApk {
+            val latestCompanion = githubRelease.assets
+                .filter { it.name.contains(PACKAGE_NAME_PLAY_STORE) }
+                .filter { it.name.endsWith(".apk") }
+                .first { !it.name.contains("hw") }
+
+
+            return ExternalApk(
+                packageName = PACKAGE_NAME_PLAY_STORE,
+                versionCode = latestCompanion.name.removeSuffix(".apk").split("-").last().toLong(),
+                versionName = githubRelease.tag_name,
+                displayName = "microG Companion",
+                iconURL = "$ICON_BASE_URL/GmsCore/refs/heads/master/vending-app/$ICON_FILE_PATH",
+                developerName = "microG Team",
+                fileList =  listOf(
+                    PlayFile(
+                        url = latestCompanion.browser_download_url,
+                        name = latestCompanion.name,
+                        size = latestCompanion.size,
+                        sha256 = latestCompanion.sha256
+                    )
+                )
+            )
+        }
+
+        fun getLatestVersionBundle(): List<ExternalApk> {
+            val githubRelease = getLatestRelease()
+            val microGServiceLatestApk = getMicroGApk(githubRelease)
+            val microGCompanionLatestApk = getCompanionApk(githubRelease)
+
+            return listOf(microGServiceLatestApk, microGCompanionLatestApk)
+        }
+    }
+}

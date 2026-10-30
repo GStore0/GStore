@@ -18,6 +18,7 @@ import java.lang.reflect.Modifier
 
 @SuppressLint("NewApi")
 class SpoofAppComponentFactory: AppComponentFactory() {
+    private val TAG = "SpoofAppComponentFactory"
     var coreComponentFactory: Class<*>? = null
     var  checkCompatWrapper: Method? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -39,27 +40,6 @@ class SpoofAppComponentFactory: AppComponentFactory() {
         PackageManagerProxy.init()
     }
 
-    private fun initCrashReport(application: Application) {
-        fun check() {
-            try {
-                val context = application.applicationContext
-
-                if (context != null) {
-                    GithubCrashReport.init(context)
-                    return
-                }
-            } catch (_: NullPointerException) {
-                // Application not attached yet
-            }
-
-            handler.postDelayed({
-                check()
-            }, 100L)
-        }
-
-        check()
-    }
-
     override fun instantiateActivity(
         cl: ClassLoader,
         className: String,
@@ -69,9 +49,7 @@ class SpoofAppComponentFactory: AppComponentFactory() {
     }
 
     override fun instantiateApplication(cl: ClassLoader, className: String): Application {
-        return checkCompatWrapper(super.instantiateApplication(cl, className)).also {
-            initCrashReport(it)
-        }
+        return checkCompatWrapper(super.instantiateApplication(cl, className))
     }
 
     override fun instantiateClassLoader(cl: ClassLoader, aInfo: ApplicationInfo): ClassLoader {
@@ -102,7 +80,7 @@ class SpoofAppComponentFactory: AppComponentFactory() {
 
             return obj
         } catch (e: Throwable) {
-            Log.w("AppFactory", $$"CoreComponentFactory$CompatWrapped is not being used", e)
+            Log.w(TAG, $$"CoreComponentFactory$CompatWrapped is not being used", e)
         }
         return obj
     }

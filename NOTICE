@@ -1,0 +1,53 @@
+GStore
+======
+
+GStore is a modified version ("fork") of Aurora Store. It is free software
+licensed under the GNU General Public License, version 3 or (at your option)
+any later version (GPL-3.0-or-later). The full licence text is in LICENSE and
+LICENSES/GPL-3.0-or-later.txt. There is NO WARRANTY, to the extent permitted
+by law.
+
+Original work
+-------------
+Aurora Store
+  https://gitlab.com/AuroraOSS/AuroraStore
+  (GitHub mirror: https://github.com/whyorean/AuroraStore)
+Copyright (C) 2021-2026 Aurora OSS
+Copyright (C) 2021-2025 Rahul Kumar Patel <whyorean@gmail.com>
+Copyright (C) 2022-2026 The Calyx Institute
+Copyright (C) 2023 grrfe <grrfe@420blaze.it>
+and the other contributors and Aurora Store translators named in the
+SPDX-FileCopyrightText headers of individual files and in REUSE.toml.
+All of those headers and licence texts are retained unchanged.
+
+GStore is not affiliated with, endorsed by or sponsored by Aurora OSS or The
+Calyx Institute. "Aurora Store", "Aurora OSS" and the Aurora logo identify the
+upstream project and are not claimed by GStore.
+
+Modifications (GPL-3.0 section 5(a)), made by KangRio, 2026-10-29
+-----------------------------------------------------------------
+- Renamed the application to GStore.
+- Changed the application ID and namespace from com.aurora.store to
+  com.kangrio.gstore; moved Kotlin/Java packages com.aurora.store,
+  com.aurora.extensions and com.aurora.Constants to com.kangrio.gstore.*;
+  renamed the classes AuroraApp, AuroraDatabase and AuroraListItem to
+  GStoreApp, GStoreDatabase and GStoreListItem.
+- Replaced the product name in user-visible strings (all locales), store
+  listing texts and the README; added a fork notice to the About dialog.
+- Replaced the launcher icons, in-app logo, notification icon and TV banner
+  with new GStore artwork (branding/gstore-logo.svg); the Aurora Store logo
+  is no longer included.
+- Added this NOTICE file and an annotation for it in REUSE.toml.
+
+Kept as in upstream
+-------------------
+- com.aurora.gplayapi (external library) and the com.aurora.services AIDL
+  interface to the separate Aurora Services app.
+- Links, POLICY.md and DISCLAIMER.md that describe upstream Aurora Store.
+- Third-party material and its licences: see REUSE.toml and LICENSES/
+  (e.g. Google root CA bundle, CC0-1.0; Gradle wrapper, Apache-2.0;
+  Material Design icons, Apache-2.0).
+
+If you distribute GStore (modified or not), you must pass on the same
+licence, keep these notices, and offer the corresponding source code of the
+exact version you distribute.
