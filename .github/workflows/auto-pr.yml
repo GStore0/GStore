@@ -1,4 +1,3 @@
-
 name: Auto Create Pull Request
 
 on:
@@ -7,36 +6,38 @@ on:
       - master
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
 
 jobs:
   create-pr:
+    if: github.event.deleted == false
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get PR title
-        id: pr
-        run: |
-          TITLE=$(printf '%s\n' "$COMMIT_MESSAGE" | head -n 1)
-          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+      - name: Create PR if none exists
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          open_prs=$(gh pr list --repo "$REPO" --head "$BRANCH" --base master \
+            --state open --json number --jq 'length')
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref_name }}
-          title: ${{ steps.pr.outputs.title }}
-          body: |
-            Automatically created from push.
+          if [ "$open_prs" -gt 0 ]; then
+            echo "PR for $BRANCH already exists, skipping."
+            exit 0
+          fi
 
-            **Source branch:** `${{ github.ref_name }}`
-            **Target branch:** `master`
-          delete-branch: false
+          TITLE=$(printf '%s\n' "$COMMIT_MESSAGE" | head -n 1)
+          [ -z "$TITLE" ] && TITLE="$BRANCH"
+
+          BODY="Automatically created from push.
+
+          **Source branch:** \`$BRANCH\`
+          **Target branch:** \`master\`"
+
+          gh pr create --repo "$REPO" \
+            --head "$BRANCH" --base master \
+            --title "$TITLE" --body "$BODY"
