@@ -1,0 +1,43 @@
+
+name: Auto Create Pull Request
+
+on:
+  push:
+    branches-ignore:
+      - master
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR title
+        id: pr
+        run: |
+          TITLE=$(printf '%s\n' "$COMMIT_MESSAGE" | head -n 1)
+          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: master
+          branch: ${{ github.ref_name }}
+          title: ${{ steps.pr.outputs.title }}
+          body: |
+            Automatically created from push.
+
+            **Source branch:** `${{ github.ref_name }}`
+            **Target branch:** `master`
+          delete-branch: false
