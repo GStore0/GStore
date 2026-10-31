@@ -9,8 +9,6 @@ import android.content.BroadcastReceiver
 import android.content.ContentProvider
 import android.content.Intent
 import android.content.pm.ApplicationInfo
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import java.lang.reflect.Method
@@ -21,9 +19,8 @@ class SpoofAppComponentFactory: AppComponentFactory() {
     private val TAG = "SpoofAppComponentFactory"
     var coreComponentFactory: Class<*>? = null
     var  checkCompatWrapper: Method? = null
-    private val handler = Handler(Looper.getMainLooper())
 
-    init {
+    private fun init() {
         try {
             HiddenApiBypass.addHiddenApiExemptions("L")
             coreComponentFactory = Class.forName("androidx.core.app.CoreComponentFactory")
@@ -49,6 +46,7 @@ class SpoofAppComponentFactory: AppComponentFactory() {
     }
 
     override fun instantiateApplication(cl: ClassLoader, className: String): Application {
+        init()
         return checkCompatWrapper(super.instantiateApplication(cl, className))
     }
 
