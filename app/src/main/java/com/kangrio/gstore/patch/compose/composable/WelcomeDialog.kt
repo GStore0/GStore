@@ -47,11 +47,11 @@ import java.net.URL
 object WelcomeDialog {
     private const val DEFAULT_CONTENT = """
         {
-          "updateTs": ${BuildConfig.BUILD_TIMESTAMP},
-          "content": "<p>This build is a community fork adapted to run Android (AOSP). Before you continue, please read where this app comes from and what it does.</p><br><p><b>Source</b></p><p>This fork: GStore, maintained by KangRio<br>Upstream: Aurora Store, by whyorean (AuroraOSS)<br>License: GPLv3, free and open source software</p><p>&#8226; <a href=\"https://github.com/GStore0/GStore\">This fork on GitHub</a><br>&#8226; <a href=\"https://github.com/whyorean/AuroraStore\">Original Aurora Store</a><br>&#8226; <a href=\"https://auroraoss.com/\">Official site</a></p><br><p><b>This BYD Build</b></p><p>Packaged and signed independently for BYD head units, with rootless microG/GmsCore patching so apps run without root access. See the <a href=\"https://github.com/GStore0/GStore#readme\">README</a> for build-specific notes and known limitations on this platform.</p><br><p><b>Support</b></p><p>If you find this build useful, you can support its development and help keep the project alive.<br>&#8226; <a href=\"https://ko-fi.com/kangrio\">ko-fi.com/kangrio</a></p>"
+          "updateTs": 1793352456,
+          "content": "<p>This build is a community fork adapted to run Android (AOSP). Before you continue, please read where this app comes from and what it does.</p><br><p><b>Source</b></p><p>This fork: GStore, maintained by KangRio<br>Upstream: Aurora Store, by whyorean (AuroraOSS)<br>License: GPLv3, free and open source software</p><p>&#8226; <a href=\"https://github.com/GStore0/GStore\">This fork on GitHub</a><br>&#8226; <a href=\"https://github.com/whyorean/AuroraStore\">Original Aurora Store</a><br>&#8226; <a href=\"https://auroraoss.com/\">Official site</a></p><br><p><b>This Build</b></p><p>Packaged and signed independently for AOSP, with rootless microG/GmsCore patching so apps run without root access. See the <a href=\"https://github.com/GStore0/GStore#readme\">README</a> for build-specific notes and known limitations on this platform.</p><br><p><b>Support</b></p><p>If you find this build useful, you can support its development and help keep the project alive.<br>&#8226; <a href=\"https://ko-fi.com/kangrio\">ko-fi.com/kangrio</a></p>"
         }
     """
-    private const val WELCOME_URL = "https://raw.githubusercontent.com/GStore0/GStore/master/welcome.json"
+    private const val WELCOME_URL = "https://raw.githubusercontent.com/GStore0/GStore/welcome/welcome.json"
 
     private const val PREF_FILE = "welcome_dialog"
     private const val KEY_SEEN_TS = "seen_update_ts"

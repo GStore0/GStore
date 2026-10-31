@@ -36,6 +36,7 @@ import com.kangrio.gstore.data.room.update.IgnoredUpdateDao
 import com.kangrio.gstore.data.room.update.Update
 import com.kangrio.gstore.data.room.update.UpdateDao
 import com.kangrio.gstore.data.room.update.isIgnoredBy
+import com.kangrio.gstore.patch.UpdateWorkerPatch
 import com.kangrio.gstore.patch.data.GitHubRelease
 import com.kangrio.gstore.patch.morphe.MorpheApp
 import com.kangrio.gstore.patch.morphe.MorphePatcherBridge
@@ -259,6 +260,7 @@ class UpdateWorker @AssistedInject constructor(
             } else {
                 updateDao.delete(context.packageName)
             }
+            UpdateWorkerPatch.getMicroGUpdate(context)?.let { updates.addAll(it) }
 
             return@withContext updates.map {
                 Update.fromApp(

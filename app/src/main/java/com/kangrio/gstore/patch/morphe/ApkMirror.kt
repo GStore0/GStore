@@ -13,7 +13,7 @@ object ApkMirror {
         appName: String,
         versionName: String,
         arch: String = "universal",
-        fallbackArch: String? = null,
+        fallbackArch: List<String>? = null,
         minSdk: Int = 0
     ): Long? = withContext(Dispatchers.IO) {
         try {
@@ -25,16 +25,16 @@ object ApkMirror {
                     "$appSlug-$versionSlug-release/"
 
             val doc = Jsoup.connect(url)
-                .userAgent("APKUpdater-v3.0.3")
+                .userAgent("APKUpdater-v0.0.604")
                 .header("Accept", "text/html,application/xhtml+xml")
                 .header("Accept-Language", "en-US,en;q=0.9")
                 .referrer("https://www.apkmirror.com/")
-                .timeout(10_000)
+                .timeout(30_000)
                 .get()
 
             val rows = doc.select(".variants-table .table-row")
 
-            fun findCode(targetArch: String): Long? {
+            fun findCode(targetArch: List<String>): Long? {
                 for (row in rows) {
                     val cells = row.select(".table-cell")
                     if (cells.size < 4) continue
@@ -46,7 +46,9 @@ object ApkMirror {
                     if (rowVersion != versionName) continue
 
                     val rowArch = cells[1].text().trim()
-                    if (!matchesArch(rowArch, targetArch)) continue
+                    for (arch in targetArch) {
+                        if (!matchesArch(rowArch, arch)) continue
+                    }
 
                     val androidVersion = cells[2].text().trim()
                     val requiredSdk = androidVersion
@@ -69,9 +71,9 @@ object ApkMirror {
                 return null
             }
 
-            findCode(arch)
+            findCode(listOf(arch))
                 ?: fallbackArch
-                    ?.takeIf { !it.equals(arch, ignoreCase = true) }
+                    ?.takeIf { arch !in it }
                     ?.let { findCode(it) }
 
         } catch (e: Exception) {
