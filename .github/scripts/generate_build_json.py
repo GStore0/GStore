@@ -11,7 +11,7 @@ from pathlib import Path
 
 ICON_URL = (
     "https://raw.githubusercontent.com/"
-    "{repository}/refs/heads/main/"
+    "{repository}/refs/heads/master/"
     "app/src/main/res/mipmap-hdpi/ic_launcher.png"
 )
 
@@ -62,8 +62,8 @@ def generate_metadata(apk, build_type):
     filename = apk.name
 
     download_url = (
-        f"https://github.com/{repository}/releases/download/"
-        f"{tag}/{filename}"
+        f"https://github.com/{repository}/releases/latest/download/"
+        f"{filename}"
     )
 
     changelog = run([
