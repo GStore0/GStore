@@ -11,6 +11,13 @@ GStore is an open-source Android app store designed for non-root AOSP devices th
 > It has been modified and renamed; it is not affiliated with or endorsed by Aurora OSS.
 > See [NOTICE](NOTICE) for the list of modifications and [LICENSE](LICENSE) for the licence text.
 
+## Join Our Telegram Community
+
+Stay updated with the latest news, releases, and announcements. Have questions or need help? Join the community!
+
+- **[Telegram Channel](https://t.me/GStore000)** — News, updates, and announcements.
+- **[Telegram Group](https://t.me/GSrore000_chat)** — Questions, discussions, and community support.
+
 ## Overview
 
 Many Android devices use an AOSP-based operating system without Google Mobile Services. Apps that depend on Google Play Services may fail to launch or may have limited functionality on these devices.
