@@ -71,6 +71,7 @@ private fun ScreenContent(onAboutAurora: () -> Unit = {}) {
     val linkIcons = intArrayOf(
         R.drawable.ic_about,
         R.drawable.ic_github,
+        R.drawable.ic_telegram,
         R.drawable.ic_kofi,
         R.drawable.ic_aurora
     )

@@ -29,7 +29,7 @@
     <string name="about_paypal">PayPal</string>
     <string name="about_paypal_summary">"Donate via PayPal"</string>
     <string name="about_telegram">"Telegram"</string>
-    <string name="about_telegram_summary">"Join the Aurora Support group for discussions or suggestions."</string>
+    <string name="about_telegram_summary">"Join the GStore Support group for discussions or suggestions."</string>
     <string name="about_xda">"XDA Forums"</string>
     <string name="about_xda_summary">"See the Aurora Store XDA thread for discussions or suggestions."</string>
     <string name="account_anonymous">"Anonymous"</string>
@@ -728,7 +728,7 @@
     <string name="about_kofi">Ko-Fi</string>
     <string name="about_kofi_summary">"Support via Ko-Fi"</string>
     <string name="about_big_thanks">Big thanks</string>
-    <string name="about_big_thanks_summary">Thanks to Aurora OSS the developers of forked this project</string>
+    <string name="about_big_thanks_summary">Thanks to the Aurora OSS team for their original project, which this project is based on</string>
 
     <string name="title_morphe">Morphe</string>
 </resources>

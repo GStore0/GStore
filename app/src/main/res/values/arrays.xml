@@ -24,6 +24,7 @@
     <string-array name="link_urls">
         <item>https://github.com/GStore0/GStore</item>
         <item>https://github.com/GStore0/GStore</item>
+        <item>https://t.me/GStore000</item>
         <item>https://ko-fi.com/kangrio</item>
         <item>https://auroraoss.com/</item>
     </string-array>
@@ -31,6 +32,7 @@
     <string-array name="link_titles">
         <item>@string/title_about</item>
         <item>@string/about_github</item>
+        <item>@string/about_telegram</item>
         <item>@string/about_kofi</item>
         <item>@string/about_big_thanks</item>
     </string-array>
@@ -38,6 +40,7 @@
     <string-array name="link_subtitle">
         <item>@string/about_aurora_store_subtitle</item>
         <item>@string/about_github_summary</item>
+        <item>@string/about_telegram_summary</item>
         <item>@string/about_kofi_summary</item>
         <item>@string/about_big_thanks_summary</item>
     </string-array>
