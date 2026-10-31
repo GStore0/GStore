@@ -291,21 +291,10 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         ).valueAsString = ConstantsPatch.PATCH_APP_COMPONENT_FACTORY_CLASS
         addMetaData(apkModule, ConstantsPatch.META_DATA_SPOOFED_CERTIFICATES, signatureData)
         addMetaData(apkModule, ConstantsPatch.META_DATA_PATCH_VERSION_CODE, BuildConfig.PATCH_VERSION_CODE, ValueType.DEC)
-        removeZygotePreload(apkModule)
 
         // source https://github.com/microg/GmsCore/blob/master/play-services-core/src/huawei/AndroidManifest.xml
         if (apkModule.packageName == MICROG_PACKAGE_NAME) {
             applyMicroGSettings(apkModule)
-        }
-    }
-
-    // fix some app crash
-    fun removeZygotePreload(apkModule: ApkModule) {
-        val application = apkModule.androidManifest.applicationElement
-
-        application.removeAttributeIf { it.name == "ZygotePreload" }
-        application.elements.forEach { element ->
-            element.removeAttributeIf { it.name == "useAppZygote" }
         }
     }
 
