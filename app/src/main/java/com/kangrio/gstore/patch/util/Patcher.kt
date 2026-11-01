@@ -1,6 +1,7 @@
 package com.kangrio.gstore.patch.util
 
 import android.content.Context
+import android.os.Build
 import android.util.Base64
 import com.kangrio.gstore.BuildConfig
 import com.kangrio.gstore.R
@@ -287,7 +288,7 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         val application: ResXmlElement = apkModule.androidManifest.applicationElement
 
         application.getOrCreateAndroidAttribute(
-            "appComponentFactory", 0
+            "appComponentFactory", if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) android.R.attr.appComponentFactory else 0
         ).valueAsString = ConstantsPatch.PATCH_APP_COMPONENT_FACTORY_CLASS
         addMetaData(apkModule, ConstantsPatch.META_DATA_SPOOFED_CERTIFICATES, signatureData)
         addMetaData(apkModule, ConstantsPatch.META_DATA_PATCH_VERSION_CODE, BuildConfig.PATCH_VERSION_CODE, ValueType.DEC)
