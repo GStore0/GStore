@@ -1,9 +1,9 @@
 -dontoptimize
 -keepattributes *
--keep class android.** {
-    *;
-}
--keep class com.kangrio.** {
-    *;
-}
+-keep class android.** { *; }
+-keep class com.kangrio.** { *; }
+-keep class com.google.android.gms.** { *; }
+-keep class org.conscrypt.** { *; }
+-dontwarn com.android.org.conscrypt.SSLParametersImpl
+-dontwarn org.apache.harmony.xnet.provider.jsse.SSLParametersImpl
 -repackageclasses 'com.kangrio'
