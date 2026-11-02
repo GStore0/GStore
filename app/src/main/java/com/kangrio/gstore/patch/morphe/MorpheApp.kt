@@ -93,6 +93,18 @@ object MorpheApp {
         includeExperimental: Boolean = false
     ): String? = getLatestVersion(App.fromPackageName(packageName), includeExperimental)
 
+    fun getAllVersion(
+        app: App,
+        includeExperimental: Boolean = false
+    ): List<String> = get(app).mapNotNull {
+        if (includeExperimental || !it.isExperimental) it.version else null
+    }
+
+    fun getAllVersion(
+        packageName: String,
+        includeExperimental: Boolean = false
+    ): List<String> = getAllVersion(App.fromPackageName(packageName), includeExperimental)
+
     private fun download(url: String): String {
         val connection = URL(url).openConnection() as HttpURLConnection
 
