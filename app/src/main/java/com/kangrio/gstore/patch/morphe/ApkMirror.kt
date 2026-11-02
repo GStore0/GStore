@@ -46,9 +46,7 @@ object ApkMirror {
                     if (rowVersion != versionName) continue
 
                     val rowArch = cells[1].text().trim()
-                    for (arch in targetArch) {
-                        if (!matchesArch(rowArch, arch)) continue
-                    }
+                    if (targetArch.none { matchesArch(rowArch, it) }) continue
 
                     val androidVersion = cells[2].text().trim()
                     val requiredSdk = androidVersion
