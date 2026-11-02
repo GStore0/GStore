@@ -52,6 +52,7 @@ android {
 }
 
 dependencies {
+    implementation("org.microg.gms:conscrypt-gmscore:2.5.2")
     implementation("org.lsposed.hiddenapibypass:hiddenapibypass:6.1")
     compileOnly("androidx.annotation:annotation:1.9.1")
     compileOnly(project(":extension:stub"))
