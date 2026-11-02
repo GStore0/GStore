@@ -1,0 +1,47 @@
+name: Telegram Release Notification
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Telegram notification
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
+        run: |
+          MESSAGE=$(cat <<EOF
+          🚀 GStore ${TAG_NAME} is officially released!
+
+          We're excited to announce the stable release of GStore!
+
+          ${RELEASE_BODY}
+
+          📦 Download ${TAG_NAME}:
+          ${RELEASE_URL}
+
+          💬 Join our community:
+          - Telegram Channel: https://t.me/GStore000
+          - Telegram Group: https://t.me/GSrore000_chat
+
+          Thank you for supporting GStore. Stay tuned for more updates!
+
+          #GStore #Release #Android
+          EOF
+          )
+
+          curl -sS --fail-with-body -X POST \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${MESSAGE}" \
+            -d "disable_web_page_preview=true"
