@@ -5,7 +5,7 @@ import java.net.URL
 
 object MorpheApp {
 
-    private const val BASE_URL = "https://raw.githubusercontent.com/MorpheApp/morphe-patches/main/patches/src/main/kotlin/app/morphe/patches"
+    private const val BASE_URL = "https://raw.githubusercontent.com/MorpheApp/morphe-patches/refs/tags"
 
     enum class App(
         val packageName: String,
@@ -13,11 +13,11 @@ object MorpheApp {
     ) {
         YOUTUBE(
             "com.google.android.youtube",
-            "youtube/shared/Constants.kt"
+            "patches/src/main/kotlin/app/morphe/patches/youtube/shared/Constants.kt"
         ),
         YOUTUBE_MUSIC(
             "com.google.android.apps.youtube.music",
-            "music/shared/Constants.kt"
+            "patches/src/main/kotlin/app/morphe/patches/music/shared/Constants.kt"
         );
 
         companion object {
@@ -39,7 +39,8 @@ object MorpheApp {
     )
 
     fun get(app: App): List<Target> {
-        val source = download("$BASE_URL/${app.path}")
+        val latestPatchVersion = MorpheUtils.getLatestPatchVersion()
+        val source = download("$BASE_URL/v$latestPatchVersion/${app.path}")
 
         // Match each AppTarget(...) block, including multiline arguments.
         val targetPattern = Regex(
