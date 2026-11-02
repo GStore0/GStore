@@ -294,8 +294,19 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         addMetaData(apkModule, ConstantsPatch.META_DATA_PATCH_VERSION_CODE, BuildConfig.PATCH_VERSION_CODE, ValueType.DEC)
 
         // source https://github.com/microg/GmsCore/blob/master/play-services-core/src/huawei/AndroidManifest.xml
-        if (apkModule.packageName == MICROG_PACKAGE_NAME) {
+        if (isMicroG(apkModule)) {
             applyMicroGSettings(apkModule)
+            exportAskPackageOverrideActivity(apkModule)
+        }
+    }
+
+    fun exportAskPackageOverrideActivity(apkModule: ApkModule) {
+        val application: ResXmlElement = apkModule.androidManifest.applicationElement
+        val askPackageOverrideActivity = application.elements.asSequence().firstOrNull { element ->
+            element.getOrCreateAndroidAttribute(null, android.R.attr.name).valueAsString == "org.microg.gms.auth.AskPackageOverrideActivity"
+        }
+        askPackageOverrideActivity?.let {
+            it.getOrCreateAndroidAttribute(null, android.R.attr.exported).valueAsBoolean = true
         }
     }
 
@@ -395,6 +406,10 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         application.getOrCreateAndroidAttribute(null, android.R.attr.extractNativeLibs).apply {
             valueAsBoolean = true
         }
+    }
+
+    fun isMicroG(apkModule: ApkModule): Boolean {
+        return apkModule.packageName == MICROG_PACKAGE_NAME
     }
 
     fun replaceMicroGProfiles(apkModule: ApkModule) {
