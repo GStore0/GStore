@@ -22,6 +22,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.kangrio.extension.creator.PackageInfoCreator;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -42,6 +44,8 @@ public class PackageManagerProxy extends Binder {
     private int userId = 0;
 
     public static void init() {
+        initPackageInfoCreator();
+
         try {
             PackageManagerProxy proxy = new PackageManagerProxy();
             ArrayMap<String, IBinder> sCache = (ArrayMap<String, IBinder>) Utils.getFieldValue(ServiceManager.class, SERVICE_CACHE_FIELD_NAME, null);
@@ -60,13 +64,46 @@ public class PackageManagerProxy extends Binder {
         }
     }
 
+    private static void initPackageInfoCreator() {
+        PackageInfoCreator creator = new PackageInfoCreator();
+
+        try {
+            Utils.getField(PackageInfo.class, "CREATOR").set(null, creator);
+        } catch (Throwable e) {
+            Log.e(TAG, "initPackageInfoCreator fail: ", e);
+        }
+        try {
+            Object cache = Utils.getField(PackageManager.class, "sPackageInfoCache").get(null);
+            // noinspection ConstantConditions
+            cache.getClass().getMethod("clear").invoke(cache);
+        } catch (Throwable e) {
+            Log.e(TAG, "initPackageInfoCreator fail: ", e);
+        }
+        try {
+            Map<?, ?> mCreators = (Map<?, ?>) Utils.getField(Parcel.class, "mCreators").get(null);
+            // noinspection ConstantConditions
+            mCreators.clear();
+        } catch (Throwable e) {
+            Log.e(TAG, "initPackageInfoCreator fail: ", e);
+        }
+        try {
+            Map<?, ?> sPairedCreators = (Map<?, ?>) Utils.getField(Parcel.class, "sPairedCreators").get(null);
+            // noinspection ConstantConditions
+            sPairedCreators.clear();
+        } catch (Throwable e) {
+            Log.e(TAG, "initPackageInfoCreator fail: ", e);
+        }
+    }
+
     private PackageManagerProxy() {
         this.iBinder = ServiceManager.getService(PACKAGE_MANAGER_SERVICE_NAME);
         this.iPackageManager = IPackageManager.Stub.asInterface(iBinder);
         this.transactionCodes = initTransactionCodes();
 
         try{
-            this.userId = (int) UserHandle.class.getDeclaredMethod("myUserId").invoke(null);
+            Method getMyUserId = UserHandle.class.getDeclaredMethod("getMyUserId");
+            getMyUserId.setAccessible(true);
+            this.userId = (int) getMyUserId.invoke(null);
         } catch (Throwable ignore) {}
     }
 
@@ -113,7 +150,13 @@ public class PackageManagerProxy extends Binder {
         return switch (transaction) {
             case "getInstallerPackageName" -> getInstallerPackageName(code, data, reply, flags);
             case "getInstallSourceInfo" -> getInstallSourceInfo(code, data, reply, flags);
-            case "getPackageInfo" -> getPackageInfo(code, data, reply, flags);
+
+            /*
+            Work around ClassNotFoundException for GMSCore's relocated Conscrypt key class
+            by using Parcelable to reconstruct PackageInfo instead of calling getPackageInfo.
+            */
+
+            // case "getPackageInfo" -> getPackageInfo(code, data, reply, flags);
 
             default -> transactOriginal(code, data, reply, flags);
         };
@@ -162,6 +205,10 @@ public class PackageManagerProxy extends Binder {
           Fixed: provide only requested package info flags
          */
         PackageInfo packageInfo = getPackageInfoInternal(pkg, (int) flags2);
+        if (packageInfo == null) {
+            return transactOriginal(code, data, reply, flags);
+        }
+
         if ((flags2 & PackageManager.GET_SIGNATURES) != 0) {
             packageInfo.signatures[0] = Utils.spoofSignature(packageInfo, signatureData);
         }
@@ -206,6 +253,9 @@ public class PackageManagerProxy extends Binder {
 
         // https://android.googlesource.com/platform/frameworks/base/+/main/core/java/android/content/pm/InstallSourceInfo.java#71
         PackageInfo packageInfo = getPackageInfoInternal(PLAY_STORE_PACKAGE_NAME, PackageManager.GET_SIGNING_CERTIFICATES);
+        if (packageInfo == null) {
+            return transactOriginal(code, data, reply, flags);
+        }
         packageInfo.signingInfo = Utils.spoofSigningInfo(packageInfo, Utils.fakeGoogleSignatureData);
 
         Parcel newSource = Parcel.obtain();

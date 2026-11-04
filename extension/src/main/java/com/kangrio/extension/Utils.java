@@ -1,6 +1,7 @@
 package com.kangrio.extension;
 
 import android.annotation.TargetApi;
+import android.app.Application;
 import android.content.pm.PackageInfo;
 import android.content.pm.Signature;
 import android.content.pm.SigningInfo;
@@ -9,6 +10,7 @@ import android.util.Base64;
 import android.util.Log;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -46,6 +48,23 @@ public class Utils {
                     "MBEmh/9iFBDAaTCK\n";
     private static final ArrayMap<String, Signature> mSignatureCache = new ArrayMap<>();
     private static final ArrayMap<String, SigningInfo> mSigningInfoCache = new ArrayMap<>();
+
+    private static Application application = null;
+
+    public static Application getApplication() {
+        if (application != null) return application;
+
+        try {
+            Class<?> clazz = Class.forName("android.app.ActivityThread");
+            Method currentApplication = clazz.getMethod("currentApplication");
+            currentApplication.setAccessible(true);
+            application = (Application) currentApplication.invoke(null);
+        } catch (Throwable e) {
+            Log.e(TAG, "getApplication", e);
+        }
+
+        return application;
+    }
 
     public static Signature spoofSignature(PackageInfo packageInfo, String signatureData) {
         Signature cache = mSignatureCache.get(packageInfo.packageName);
