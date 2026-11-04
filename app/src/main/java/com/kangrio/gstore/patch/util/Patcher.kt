@@ -38,10 +38,10 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         get() = packageName in MorpheApp.apps.keys && Preferences.getBoolean(context, ConstantsPatch.USE_MORPHE_PATCH_IF_AVAILABLE, true)
 
     private val patchDirectory: File
-        get() = File(requireApkParent(), "patch")
+        get() = File(requireApkParent(), "patch").apply { mkdirs() }
 
     private val morpheDirectory: File
-        get() = File(requireApkParent(), "morphe")
+        get() = File(requireApkParent(), "morphe").apply { mkdirs() }
 
     fun start(): List<File> {
         if (packageName in MorpheApp.apps.keys && !Preferences.getBoolean(context, ConstantsPatch.USE_MORPHE_PATCH_IF_AVAILABLE, true)) {
@@ -59,10 +59,11 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         try {
             apkFiles.forEachIndexed { index, originalApk ->
                 val patchedApk = patchSingle(index, originalApk)
-                val signedApk = File(patchDirectory.apply { mkdirs() }, originalApk.name)
+                val signedApk = File(patchDirectory, originalApk.name)
 
                 signApk(index, patchedApk, signedApk)
                 signedApks += signedApk
+                patchedApk.delete()
             }
         } catch (e: Exception) {
             progressState.finish()
@@ -70,10 +71,22 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         }
 
         progressState.finish()
+        val tmpFiles= toTmpFiles(signedApks)
+        patchDirectory.deleteRecursively()
 
-        if (!isMorpheApp) return signedApks
+        if (!isMorpheApp) return tmpFiles
 
-        return applyMorphePatches(signedApks)
+        return applyMorphePatches(tmpFiles)
+    }
+
+    fun toTmpFiles(files: List<File>): List<File> {
+        val dir = File(context.cacheDir, "tmp_${System.currentTimeMillis()}").apply { mkdirs() }
+        val tmpFiles = files.map {
+            val tmp = File(dir, it.name).apply { createNewFile() }
+            it.renameTo(tmp)
+            tmp
+        }
+        return tmpFiles
     }
 
     fun startWithReplace() {
@@ -82,6 +95,7 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
             val index = patchedApks.map { it.name }.indexOf(file.name)
             patchedApks[index].renameTo(file)
         }
+        patchedApks.firstOrNull()?.parentFile?.deleteRecursively()
     }
 
     fun applyMorphePatch(apkFiles: List<File>, onProgress: (String) -> Unit = {}): Map<Boolean, File> {
@@ -90,7 +104,7 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
                 isBaseModule(it)
             }
         }
-        val outputFile = File(morpheDirectory.apply { mkdirs() }, baseFile.name)
+        val outputFile = File(morpheDirectory, baseFile.name)
         return MorphePatcherBridge.patch(context, packageName,apkFiles.first().parentFile, outputFile, onProgress)
     }
 
@@ -100,7 +114,15 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
 
         try {
             progressState.beginStep(0, messages[0])
-            val patchedApk = applyMorphePatch(signedApks) {
+            morpheDirectory.deleteRecursively()
+            val morpheFiles = signedApks.map {
+                val out = File(morpheDirectory, it.name).apply { createNewFile() }
+                it.renameTo(out)
+                out
+            }
+            signedApks.firstOrNull()?.parentFile?.deleteRecursively()
+
+            val patchedApk = applyMorphePatch(morpheFiles) {
                 progressState.updateStep(0, it)
             }
             val success = patchedApk.keys.first()
@@ -112,7 +134,7 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
 
             progressState.beginStep(1, messages[1])
             val patchedApkFile = patchedApk.values.first()
-            val outputFile = File(morpheDirectory.apply { mkdirs() }, patchedApkFile.name)
+            val outputFile = File(morpheDirectory, patchedApkFile.name)
             try {
                 ApkSignerHelper.signApk(context, patchedApkFile, outputFile)
             } catch (e: Exception) {
@@ -124,15 +146,19 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
             }
             val dummies = createDummy(outputFile.parentFile!!)
 
+            val outFiles = listOf(outputFile) + dummies
+            val tmpFiles = toTmpFiles(outFiles)
+            morpheDirectory.deleteRecursively()
+
             progressState.completeStep(1)
-            return listOf(outputFile) + dummies
+            return tmpFiles
         } finally {
             progressState.finish()
         }
     }
 
     private fun createDummy(outputDirectory: File): List<File> {
-        val splits = apkFiles.filter { file ->
+        val splits = outputDirectory.listFiles()!!.filter { file ->
             ApkModule.loadApkFile(file).use {
                 !isBaseModule(it)
             }
