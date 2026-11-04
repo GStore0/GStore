@@ -62,7 +62,9 @@ public class Utils {
         Signature signature = new Signature(signatureByte);
 
         Log.d(TAG, "Spoofed signature: " + packageInfo.packageName + " " + sigToShar1(signature));
-        mSignatureCache.put(packageInfo.packageName, signature);
+        synchronized (mSignatureCache) {
+            mSignatureCache.put(packageInfo.packageName, signature);
+        }
         return signature;
     }
 
@@ -78,7 +80,9 @@ public class Utils {
         if (signaturesArray != null && signaturesArray.length > 0) {
             signaturesArray[0] = spoofSignature(packageInfo, signatureData);
         }
-        mSigningInfoCache.put(packageInfo.packageName, signingInfo);
+        synchronized (mSigningInfoCache) {
+            mSigningInfoCache.put(packageInfo.packageName, signingInfo);
+        }
         return signingInfo;
     }
 
