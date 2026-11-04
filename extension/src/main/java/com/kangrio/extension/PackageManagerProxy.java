@@ -101,7 +101,7 @@ public class PackageManagerProxy extends Binder {
         this.transactionCodes = initTransactionCodes();
 
         try{
-            Method getMyUserId = UserHandle.class.getDeclaredMethod("getMyUserId");
+            Method getMyUserId = UserHandle.class.getDeclaredMethod("myUserId");
             getMyUserId.setAccessible(true);
             this.userId = (int) getMyUserId.invoke(null);
         } catch (Throwable ignore) {}
