@@ -44,6 +44,7 @@ import com.kangrio.gstore.data.room.favourite.FavouriteDao
 import com.kangrio.gstore.data.room.review.LocalReview
 import com.kangrio.gstore.data.room.review.LocalReview.Companion.toReview
 import com.kangrio.gstore.data.room.review.ReviewDao
+import com.kangrio.gstore.patch.ConstantsPatch
 import com.kangrio.gstore.patch.morphe.MorpheApp
 import com.kangrio.gstore.patch.morphe.MorphePatcherBridge
 import com.kangrio.gstore.util.CertUtil
@@ -158,8 +159,11 @@ class AppDetailsViewModel @Inject constructor(
     private val isInstalled: Boolean
         get() = PackageUtil.isInstalled(context, app.value!!.packageName)
 
+    private val isForceUpdatable: Boolean
+        get() = Preferences.getBoolean(context, ConstantsPatch.PREFERENCE_UPDATES_FORCE)
+
     private val isUpdatable: Boolean
-        get() = PackageUtil.isUpdatable(context, app.value!!.packageName, app.value!!.versionCode)
+        get() = PackageUtil.isUpdatable(context, app.value!!.packageName, app.value!!.versionCode, isForceUpdatable)
 
     private val isArchived: Boolean
         get() = PackageUtil.isArchived(context, app.value!!.packageName)

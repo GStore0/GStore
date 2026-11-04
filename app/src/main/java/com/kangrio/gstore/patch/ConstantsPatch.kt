@@ -14,4 +14,5 @@ object ConstantsPatch {
 
     // Prefs
     const val USE_MORPHE_PATCH_IF_AVAILABLE = "use_morphe_patch_if_available"
+    const val PREFERENCE_UPDATES_FORCE = "PREFERENCE_UPDATES_FORCE"
 }

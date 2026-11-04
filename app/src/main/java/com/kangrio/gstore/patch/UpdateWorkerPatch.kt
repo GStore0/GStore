@@ -14,7 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object UpdateWorkerPatch {
-    suspend fun getMicroGUpdate(context: Context): List<App>? {
+    suspend fun getMicroGUpdate(context: Context, isForce: Boolean = false): List<App>? {
         return withContext(Dispatchers.IO) {
             val updates = mutableListOf<App>()
             try {
@@ -34,7 +34,8 @@ object UpdateWorkerPatch {
                     val isCanUpdate = PackageUtil.isUpdatable(
                         context,
                         externalApk.packageName,
-                        externalApk.versionCode
+                        externalApk.versionCode,
+                        isForce
                     )
 
                     if (isCanUpdate) {

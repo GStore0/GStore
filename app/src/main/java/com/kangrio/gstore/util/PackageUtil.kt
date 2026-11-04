@@ -165,9 +165,9 @@ object PackageUtil {
         false
     }
 
-    fun isUpdatable(context: Context, packageName: String, versionCode: Long): Boolean {
+    fun isUpdatable(context: Context, packageName: String, versionCode: Long, isForce: Boolean = false): Boolean {
         return try {
-            return PackageUtilPatch.isUpdatable(context, packageName, versionCode)
+            return PackageUtilPatch.isUpdatable(context, packageName, versionCode, isForce)
             val packageInfo = getPackageInfo(context, packageName)
             return versionCode > PackageInfoCompat.getLongVersionCode(packageInfo)
         } catch (_: PackageManager.NameNotFoundException) {

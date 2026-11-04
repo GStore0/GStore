@@ -43,6 +43,7 @@ fun SettingsScreen(onNavigateTo: (Destination) -> Unit) {
 private fun ScreenContent(onNavigateTo: (Destination) -> Unit = {}) {
     val context = LocalContext.current
     var useMorphePatches by remember { mutableStateOf(Preferences.getBoolean(context, ConstantsPatch.USE_MORPHE_PATCH_IF_AVAILABLE, true)) }
+    var forceUpdatable by remember { mutableStateOf(Preferences.getBoolean(context, ConstantsPatch.PREFERENCE_UPDATES_FORCE, false)) }
 
     Scaffold(
         topBar = {
@@ -166,6 +167,27 @@ private fun ScreenContent(onNavigateTo: (Destination) -> Unit = {}) {
                             onCheckedChange = {
                                 Preferences.putBoolean(context, ConstantsPatch.USE_MORPHE_PATCH_IF_AVAILABLE, it)
                                 useMorphePatches = it
+                            }
+                        )
+                    }
+                )
+            }
+            item {
+                ListItem(
+                    modifier = Modifier.clickable { context.toast("Make all apps force to update") },
+                    leadingContent = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_cloud_upload),
+                            contentDescription = null
+                        )
+                    },
+                    headlineContent = { Text("Force update") },
+                    trailingContent = {
+                        Switch(
+                            checked = forceUpdatable,
+                            onCheckedChange = {
+                                Preferences.putBoolean(context, ConstantsPatch.PREFERENCE_UPDATES_FORCE, it)
+                                forceUpdatable = it
                             }
                         )
                     }

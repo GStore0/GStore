@@ -24,7 +24,9 @@ import com.kangrio.gstore.data.providers.AuthProvider
 import com.kangrio.gstore.data.room.favourite.Favourite
 import com.kangrio.gstore.data.room.favourite.FavouriteDao
 import com.kangrio.gstore.data.room.favourite.ImportExport
+import com.kangrio.gstore.patch.ConstantsPatch
 import com.kangrio.gstore.util.PackageUtil
+import com.kangrio.gstore.util.Preferences
 import com.kangrio.gstore.util.StorageUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -144,10 +146,11 @@ class FavouriteViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _isEnqueuing.value = true
             try {
+                val isForceUpdatable = Preferences.getBoolean(context, ConstantsPatch.PREFERENCE_UPDATES_FORCE)
                 val packageNames = favouriteDao.favourites().first().map { it.packageName }
                 val installable = appDetailsHelper.getAppByPackageName(packageNames).filter { app ->
                     val needsInstall = !PackageUtil.isInstalled(context, app.packageName) ||
-                        PackageUtil.isUpdatable(context, app.packageName, app.versionCode)
+                        PackageUtil.isUpdatable(context, app.packageName, app.versionCode, isForceUpdatable)
                     val acquirable = app.isFree || !authProvider.isAnonymous
                     needsInstall && acquirable
                 }

@@ -35,7 +35,9 @@ object PackageUtilPatch {
         return BuildConfig.PATCH_VERSION_CODE > getPatchVersionCode(context, packageName)
     }
 
-    fun isUpdatable(context: Context, packageName: String, versionCode: Long): Boolean {
+    fun isUpdatable(context: Context, packageName: String, versionCode: Long, isForce: Boolean = false): Boolean {
+        if (isForce) return true
+
         return try {
             // prebuild apk patched with morphe-patches
             if (packageName in MorpheApp.apps.keys && isMorphePatch(context, packageName)) {

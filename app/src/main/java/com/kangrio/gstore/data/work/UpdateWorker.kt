@@ -36,6 +36,7 @@ import com.kangrio.gstore.data.room.update.IgnoredUpdateDao
 import com.kangrio.gstore.data.room.update.Update
 import com.kangrio.gstore.data.room.update.UpdateDao
 import com.kangrio.gstore.data.room.update.isIgnoredBy
+import com.kangrio.gstore.patch.ConstantsPatch
 import com.kangrio.gstore.patch.UpdateWorkerPatch
 import com.kangrio.gstore.patch.data.GitHubRelease
 import com.kangrio.gstore.patch.morphe.MorpheApp
@@ -136,7 +137,9 @@ class UpdateWorker @AssistedInject constructor(
                 it.packageName
             }
 
-            val allUpdates = checkUpdates()
+            val isForceUpdatable = Preferences.getBoolean(context, ConstantsPatch.PREFERENCE_UPDATES_FORCE)
+
+            val allUpdates = checkUpdates(isForceUpdatable)
                 .also { updateDao.insertUpdates(it) }
                 .filter { if (!isExtendedUpdateEnabled) it.hasValidCert else true }
                 .filterNot { it.isIgnoredBy(ignoreRules) }
@@ -195,7 +198,7 @@ class UpdateWorker @AssistedInject constructor(
     /**
      * Checks and returns updates for all possible apps
      */
-    private suspend fun checkUpdates(): List<Update> {
+    private suspend fun checkUpdates(isForce: Boolean = false): List<Update> {
         return withContext(Dispatchers.IO) {
             val packages = PackageUtil.getAllValidPackages(context)
                 .filterNot { blacklistProvider.isBlacklisted(it.packageName) }
@@ -239,12 +242,12 @@ class UpdateWorker @AssistedInject constructor(
 
             val updates = appDetailsHelper.getAppByPackageName(filteredPackages)
                 .filter { it.displayName.isNotEmpty() }
-                .filter { PackageUtil.isUpdatable(context, it.packageName, it.versionCode) }
+                .filter { PackageUtil.isUpdatable(context, it.packageName, it.versionCode, isForce) }
                 .toMutableList()
 
             val updatesNew = updates
                 .mapNotNull { getMorpheVersion(it) }
-                .filter { PackageUtil.isUpdatable(context, it.packageName, it.versionCode) }
+                .filter { PackageUtil.isUpdatable(context, it.packageName, it.versionCode, isForce) }
             updates.clear()
             updates.addAll(updatesNew)
 
@@ -260,7 +263,7 @@ class UpdateWorker @AssistedInject constructor(
             } else {
                 updateDao.delete(context.packageName)
             }
-            UpdateWorkerPatch.getMicroGUpdate(context)?.let { updates.addAll(it) }
+            UpdateWorkerPatch.getMicroGUpdate(context, isForce)?.let { updates.addAll(it) }
 
             return@withContext updates.map {
                 Update.fromApp(
