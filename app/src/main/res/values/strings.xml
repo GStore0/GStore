@@ -731,4 +731,7 @@
     <string name="about_big_thanks_summary">Thanks to the Aurora OSS team for their original project, which this project is based on</string>
 
     <string name="title_morphe">Morphe</string>
+    <string name="pref_install_mode_other">Other</string>
+    <string name="other_installer_subtitle">Shared the files to other apps</string>
+    <string name="other_installer_desc">Select other apps to install the files</string>
 </resources>

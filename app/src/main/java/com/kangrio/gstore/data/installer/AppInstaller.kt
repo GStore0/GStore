@@ -47,7 +47,8 @@ class AppInstaller @Inject constructor(
     private val serviceInstaller: ServiceInstaller,
     private val amInstaller: AMInstaller,
     private val shizukuInstaller: ShizukuInstaller,
-    private val microGInstaller: MicroGInstaller
+    private val microGInstaller: MicroGInstaller,
+    private val otherInstaller: OtherInstaller
 ) {
 
     companion object {
@@ -79,7 +80,8 @@ class AppInstaller @Inject constructor(
             } else {
                 null
             },
-            if (hasMicroGCompanion(context)) MicroGInstaller.installerInfo else null
+            if (hasMicroGCompanion(context)) MicroGInstaller.installerInfo else null,
+            if (hasOtherInstaller(context)) OtherInstaller.installerInfo else null
         )
 
         /**
@@ -134,6 +136,8 @@ class AppInstaller @Inject constructor(
                     isOAndAbove && hasShizukuOrSui(context) && hasShizukuPerm(context)
 
                 Installer.MICROG -> false
+
+                Installer.OTHER -> false
             }
         }
 
@@ -170,6 +174,30 @@ class AppInstaller @Inject constructor(
         fun hasAppManager(context: Context): Boolean =
             PackageUtil.isInstalled(context, AMInstaller.AM_PACKAGE_NAME) or
                 PackageUtil.isInstalled(context, AMInstaller.AM_DEBUG_PACKAGE_NAME)
+
+        fun hasOtherInstaller(context: Context): Boolean {
+            val packageManager = context.packageManager
+            val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                type = "application/vnd.android.package-archive"
+                addCategory(Intent.CATEGORY_DEFAULT)
+            }
+            val activities = if (Build.VERSION.SDK_INT >= 33) {
+                packageManager.queryIntentActivities(
+                    intent,
+                    PackageManager.ResolveInfoFlags.of(
+                        PackageManager.MATCH_DEFAULT_ONLY.toLong()
+                    )
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.queryIntentActivities(
+                    intent,
+                    PackageManager.MATCH_DEFAULT_ONLY
+                )
+            }
+
+            return activities.isNotEmpty()
+        }
 
         /**
          * Whether anything here can serve the Shizuku installer — the official app, any fork of
@@ -263,6 +291,8 @@ class AppInstaller @Inject constructor(
             } else {
                 defaultInstaller
             }
+
+            Installer.OTHER -> if (hasOtherInstaller(context)) otherInstaller else defaultInstaller
         }
 
         if (selected != Installer.SESSION && installer === defaultInstaller) {
