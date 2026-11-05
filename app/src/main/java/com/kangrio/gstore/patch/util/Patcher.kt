@@ -368,7 +368,7 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         addMicroGSettings(apkModule, "auth_manager_visible", true, ValueType.BOOLEAN)
         addMicroGSettings(apkModule, "auth_include_android_id", false, ValueType.BOOLEAN)
         addMicroGSettings(apkModule, "auth_strip_device_name", true, ValueType.BOOLEAN)
-        addMicroGSettings(apkModule, "auth_two_step_verification", true, ValueType.BOOLEAN)
+//        addMicroGSettings(apkModule, "auth_two_step_verification", true, ValueType.BOOLEAN)
         addMicroGSettings(apkModule, "auth_allow_find_devices", true, ValueType.BOOLEAN)
         addMicroGSettings(apkModule, "droidguard_enabled", true, ValueType.BOOLEAN)
         addMicroGSettings(apkModule, "safetynet_enabled", true, ValueType.BOOLEAN)
