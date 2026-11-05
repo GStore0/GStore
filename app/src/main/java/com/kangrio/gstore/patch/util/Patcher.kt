@@ -71,7 +71,7 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         }
 
         progressState.finish()
-        val tmpFiles= toTmpFiles(signedApks)
+        val tmpFiles = toTmpFiles(signedApks)
         patchDirectory.deleteRecursively()
 
         if (!isMorpheApp) return tmpFiles
@@ -105,7 +105,7 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
             }
         }
         val outputFile = File(morpheDirectory, baseFile.name)
-        return MorphePatcherBridge.patch(context, packageName,apkFiles.first().parentFile, outputFile, onProgress)
+        return MorphePatcherBridge.patch(context, packageName, apkFiles.first().parentFile, outputFile, onProgress)
     }
 
     private fun applyMorphePatches(signedApks: List<File>): List<File> {
@@ -164,7 +164,7 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
             }
         }
 
-        return splits.map { split->
+        return splits.map { split ->
             val outputFile = File(outputDirectory, split.name)
             val apkModule = ApkModule()
             val tableBlock = TableBlock()
@@ -274,15 +274,15 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         val application: ResXmlElement = apkModule.androidManifest.applicationElement
 
         application.newElement(AndroidManifest.TAG_meta_data).apply {
-            createAndroidAttribute(null, android.R.attr.name).valueAsString = name
+            createAndroidAttribute(AndroidManifest.NAME_name, android.R.attr.name).valueAsString = name
             when (valueType) {
-                ValueType.BOOLEAN -> createAndroidAttribute(null, android.R.attr.value).valueAsBoolean = value as Boolean
-                ValueType.DEC -> createAndroidAttribute(null, android.R.attr.value).setValueAsDecimal(value as Int)
-                ValueType.HEX -> createAndroidAttribute(null, android.R.attr.value).setValueAsDecimal(value as Int)
-                ValueType.FLOAT -> createAndroidAttribute(null, android.R.attr.value).valueAsFloat = value as Float
-                ValueType.STRING -> createAndroidAttribute(null, android.R.attr.value).valueAsString = value.toString()
-                ValueType.REFERENCE -> createAndroidAttribute(null, android.R.attr.value).valueAsResourceId = value as Int
-                else -> createAndroidAttribute(null, android.R.attr.value).valueAsString = value.toString()
+                ValueType.BOOLEAN -> createAndroidAttribute(AndroidManifest.NAME_value, android.R.attr.value).valueAsBoolean = value as Boolean
+                ValueType.DEC -> createAndroidAttribute(AndroidManifest.NAME_value, android.R.attr.value).setValueAsDecimal(value as Int)
+                ValueType.HEX -> createAndroidAttribute(AndroidManifest.NAME_value, android.R.attr.value).setValueAsDecimal(value as Int)
+                ValueType.FLOAT -> createAndroidAttribute(AndroidManifest.NAME_value, android.R.attr.value).valueAsFloat = value as Float
+                ValueType.STRING -> createAndroidAttribute(AndroidManifest.NAME_value, android.R.attr.value).valueAsString = value.toString()
+                ValueType.REFERENCE -> createAndroidAttribute(AndroidManifest.NAME_value, android.R.attr.value).valueAsResourceId = value as Int
+                else -> createAndroidAttribute(AndroidManifest.NAME_value, android.R.attr.value).valueAsString = value.toString()
             }
         }
     }
@@ -292,7 +292,7 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         val permissionExist =
             manifest.getElements(AndroidManifest.TAG_uses_permission)?.asSequence()?.any {
                 it.getOrCreateAndroidAttribute(
-                    null,
+                    AndroidManifest.NAME_name,
                     android.R.attr.name
                 ).valueAsString == name
             } == true
@@ -300,7 +300,7 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
 
         val position = manifest.lastIndexOf(AndroidManifest.TAG_uses_permission) + 1
         manifest.newElementAt(position, AndroidManifest.TAG_uses_permission).apply {
-            createAndroidAttribute(null, android.R.attr.name).valueAsString = name
+            createAndroidAttribute(AndroidManifest.NAME_name, android.R.attr.name).valueAsString = name
         }
     }
 
@@ -323,16 +323,40 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         if (isMicroG(apkModule)) {
             applyMicroGSettings(apkModule)
             exportAskPackageOverrideActivity(apkModule)
+            addAccountManagerActivity(apkModule)
+        }
+    }
+
+    fun addAccountManagerActivity(apkModule: ApkModule) {
+        val application = apkModule.androidManifest.applicationElement
+
+        val activity = application.newElement(AndroidManifest.TAG_activity).apply {
+            getOrCreateAndroidAttribute(AndroidManifest.NAME_name, android.R.attr.name).valueAsString = "com.kangrio.extension.AccountManagerActivity"
+            getOrCreateAndroidAttribute(AndroidManifest.NAME_exported, android.R.attr.exported).valueAsBoolean = true
+        }
+
+        val intentFilter = activity.newElement(AndroidManifest.TAG_intent_filter).apply {
+            getOrCreateAndroidAttribute("priority", android.R.attr.priority).setValueAsDecimal(1000)
+        }
+        intentFilter.newElement(AndroidManifest.TAG_action).apply {
+            getOrCreateAndroidAttribute(AndroidManifest.NAME_name, android.R.attr.name).valueAsString = "android.settings.ACCOUNT_SETTINGS"
+        }
+        intentFilter.newElement(AndroidManifest.TAG_action).apply {
+            getOrCreateAndroidAttribute(AndroidManifest.NAME_name, android.R.attr.name).valueAsString = "android.settings.SYNC_SETTINGS"
+        }
+
+        intentFilter.newElement(AndroidManifest.TAG_category).apply {
+            getOrCreateAndroidAttribute(AndroidManifest.NAME_name, android.R.attr.name).valueAsString = "android.intent.category.DEFAULT"
         }
     }
 
     fun exportAskPackageOverrideActivity(apkModule: ApkModule) {
         val application: ResXmlElement = apkModule.androidManifest.applicationElement
         val askPackageOverrideActivity = application.elements.asSequence().firstOrNull { element ->
-            element.getOrCreateAndroidAttribute(null, android.R.attr.name).valueAsString == "org.microg.gms.auth.AskPackageOverrideActivity"
+            element.getOrCreateAndroidAttribute(AndroidManifest.NAME_name, android.R.attr.name).valueAsString == "org.microg.gms.auth.AskPackageOverrideActivity"
         }
         askPackageOverrideActivity?.let {
-            it.getOrCreateAndroidAttribute(null, android.R.attr.exported).valueAsBoolean = true
+            it.getOrCreateAndroidAttribute(AndroidManifest.NAME_exported, android.R.attr.exported).valueAsBoolean = true
         }
     }
 
@@ -429,7 +453,7 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
 
         // extract native libs
         val application = apkModule.androidManifest.applicationElement
-        application.getOrCreateAndroidAttribute(null, android.R.attr.extractNativeLibs).apply {
+        application.getOrCreateAndroidAttribute(AndroidManifest.NAME_extractNativeLibs, android.R.attr.extractNativeLibs).apply {
             valueAsBoolean = true
         }
     }
