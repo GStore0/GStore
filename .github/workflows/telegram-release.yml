@@ -1,8 +1,7 @@
 name: Telegram Release Notification
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -12,13 +11,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Send Telegram notification
+      - name: Get Latest Release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RELEASE=$(gh release view --json tagName,body,url)
+
+          echo "tag_name=$(echo "$RELEASE" | jq -r '.tagName')" >> "$GITHUB_OUTPUT"
+          echo "body<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$RELEASE" | jq -r '.body' >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "url=$(echo "$RELEASE" | jq -r '.url')" >> "$GITHUB_OUTPUT"
+
+      - name: Send Telegram Notification
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TAG_NAME: ${{ github.event.release.tag_name }}
-          RELEASE_BODY: ${{ github.event.release.body }}
-          RELEASE_URL: ${{ github.event.release.html_url }}
+          TAG_NAME: ${{ steps.release.outputs.tag_name }}
+          RELEASE_BODY: ${{ steps.release.outputs.body }}
+          RELEASE_URL: ${{ steps.release.outputs.url }}
         run: |
           MESSAGE=$(cat <<EOF
           🚀 GStore ${TAG_NAME} is officially released!

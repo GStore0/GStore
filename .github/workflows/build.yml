@@ -20,6 +20,7 @@ on:
 permissions:
   contents: write
   packages: write
+  actions: write
 
 jobs:
   build:
@@ -156,3 +157,8 @@ jobs:
             release/${{ steps.config.outputs.type }}_build.json
             .github/move/release_feed.json
           fail_on_unmatched_files: true
+
+      - name: Trigger Telegram Notification
+        if: ${{ steps.config.outputs.type != 'nightly' }}
+        run: |
+          gh workflow run telegram-release.yml --ref master
