@@ -74,6 +74,13 @@ def generate_metadata(apk, build_type):
         "HEAD"
     ])
 
+    last_commit_timestamp = run([
+        "git",
+        "log",
+        "-1",
+        "--format=%ct"
+    ])
+
     return {
         "version_name": version_name,
         "version_code": version_code,
@@ -89,7 +96,7 @@ def generate_metadata(apk, build_type):
             "HEAD"
         ]),
         "updated_on": now.strftime("%b %d, %Y"),
-        "timestamp": str(int(now.timestamp()))
+        "timestamp": last_commit_timestamp
     }
 
 
