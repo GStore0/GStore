@@ -65,6 +65,13 @@ def generate_metadata(apk, build_type):
         f"https://github.com/{repository}/releases/latest/download/"
         f"{filename}"
     )
+    
+    if build_type == "nightly":
+        download_url = (
+            f"https://github.com/{repository}/releases/download/"
+            f"{version_name}/"
+            f"{filename}"
+        )
 
     changelog = run([
         "git",
