@@ -153,10 +153,10 @@ class MorphePatcherRuntime(
     }
 
     private fun selectPatches(
-        patches: Set<Patch<*>>,
+        patches: Set<Patch>,
         packageName: String,
         versionName: String?
-    ): Set<Patch<*>> {
+    ): Set<Patch> {
         return patches
             .asSequence()
             .filter { patch ->
@@ -177,7 +177,7 @@ class MorphePatcherRuntime(
     }
 
     private fun applyPatches(
-        patches: Set<Patch<*>>,
+        patches: Set<Patch>,
         workDir: File,
         outputFile: File,
         onProgress: (String) -> Unit
