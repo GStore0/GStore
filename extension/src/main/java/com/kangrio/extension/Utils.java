@@ -66,6 +66,12 @@ public class Utils {
         return application;
     }
 
+    public static void clearSpoofCache(String packageName) {
+        Log.d(TAG, "Clear spoof cache: " + packageName);
+        mSignatureCache.remove(packageName);
+        mSigningInfoCache.remove(packageName);
+    }
+
     public static Signature spoofSignature(PackageInfo packageInfo, String signatureData) {
         Signature cache = mSignatureCache.get(packageInfo.packageName);
         if (cache != null) {

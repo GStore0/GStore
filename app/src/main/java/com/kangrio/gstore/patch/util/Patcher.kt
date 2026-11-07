@@ -1,6 +1,7 @@
 package com.kangrio.gstore.patch.util
 
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.util.Base64
 import com.kangrio.gstore.BuildConfig
@@ -318,12 +319,40 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         ).valueAsString = ConstantsPatch.PATCH_APP_COMPONENT_FACTORY_CLASS
         addMetaData(apkModule, ConstantsPatch.META_DATA_SPOOFED_CERTIFICATES, signatureData)
         addMetaData(apkModule, ConstantsPatch.META_DATA_PATCH_VERSION_CODE, BuildConfig.PATCH_VERSION_CODE, ValueType.DEC)
+        addReceiver(apkModule)
 
         // source https://github.com/microg/GmsCore/blob/master/play-services-core/src/huawei/AndroidManifest.xml
         if (isMicroG(apkModule)) {
             applyMicroGSettings(apkModule)
             exportAskPackageOverrideActivity(apkModule)
             addAccountManagerActivity(apkModule)
+        }
+    }
+
+    fun addReceiver(apkModule: ApkModule) {
+        val application: ResXmlElement = apkModule.androidManifest.applicationElement
+
+        val packageActions = listOf(
+            Intent.ACTION_PACKAGE_ADDED,
+            Intent.ACTION_PACKAGE_REMOVED,
+            Intent.ACTION_PACKAGE_FULLY_REMOVED,
+            Intent.ACTION_PACKAGE_REPLACED
+        )
+
+        val receiver = application.newElement(AndroidManifest.TAG_receiver).apply {
+            getOrCreateAndroidAttribute(AndroidManifest.NAME_name, android.R.attr.name).valueAsString = "com.kangrio.extension.Receiver"
+            getOrCreateAndroidAttribute(AndroidManifest.NAME_exported, android.R.attr.exported).valueAsBoolean = true
+        }
+
+        val intentFilter = receiver.newElement(AndroidManifest.TAG_intent_filter)
+        packageActions.forEach { action ->
+            intentFilter.newElement(AndroidManifest.TAG_action).apply {
+                getOrCreateAndroidAttribute(AndroidManifest.NAME_name, android.R.attr.name).valueAsString = action
+            }
+        }
+
+        intentFilter.newElement(AndroidManifest.TAG_data).apply {
+            getOrCreateAndroidAttribute("scheme", android.R.attr.scheme).valueAsString = "package"
         }
     }
 
