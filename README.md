@@ -88,30 +88,6 @@ Root access is not required for the supported installation and patching workflow
 
 On customized Android systems, additional manufacturer-specific settings may be necessary to keep background services running.
 
-## microG Compatibility
-
-GStore is intended to support applications in environments that do not have the original Google Mobile Services framework.
-
-Depending on the application, compatibility modifications may address issues involving:
-
-- Google Play Services package detection.
-- Package signatures and certificate checks.
-- Installer-source verification.
-- Applications that expect specific GMS metadata.
-- Native libraries requiring supported compatibility handling.
-
-These modifications do not reproduce the complete functionality of Google Play Services.
-
-Some applications require additional services, proprietary components, device certification, Play Integrity, DRM, or server-side verification that cannot be resolved by patching alone.
-
-### Compatibility Notes
-
-- Use the microG implementation supplied or recommended by the project.
-- Keep the compatible microG components installed and updated.
-- Enable autostart or background execution where required.
-- Reinstall an application after changing its compatibility configuration when necessary.
-- Test critical application features on your own device.
-
 ## Tested Applications
 
 The following applications have been tested or reported to work in the project's development environment. Functionality may vary by version and device.
@@ -164,50 +140,6 @@ Please keep the following in mind:
 - Do not assume that an application is secure or fully functional simply because it installs successfully.
 
 GStore does not guarantee the security, availability, or continued compatibility of third-party applications.
-
-## Troubleshooting
-
-### An application will not launch
-
-1. Confirm that the required microG components are installed.
-2. Check whether another Google Play Services or microG implementation conflicts with the installed components.
-3. Verify that background execution is allowed.
-4. Reinstall the application using GStore.
-5. Check the application logs and existing [GitHub issues](https://github.com/GStore0/GStore/issues).
-
-### An application crashes after patching
-
-The application may use unsupported APIs, native verification, DRM, or other services that cannot be handled by the current compatibility patches.
-
-Check existing issues before reporting the problem.
-
-### Google login does not work
-
-Account authentication depends on the application, microG configuration, device environment, and Google's current requirements. Successful installation does not guarantee successful authentication.
-
-### An application stops working after an update
-
-A new version may introduce additional dependencies or change its verification behavior. Try to identify the affected application version and provide a crash report if optional crash reporting is enabled.
-
-## Reporting Issues
-
-If you encounter a problem, open an issue in the repository:
-
-[GitHub Issues](https://github.com/GStore0/GStore/issues)
-
-Include the following information when possible:
-
-- Android version.
-- Device model and system version.
-- GStore version.
-- Application name and version.
-- Whether microG is installed and working.
-- Steps to reproduce the problem.
-- Relevant logs or crash traces.
-
-Remove personal information, authentication tokens, and other sensitive data before sharing logs.
-
-Please search existing issues before creating a new report.
 
 ## Project Status
 
