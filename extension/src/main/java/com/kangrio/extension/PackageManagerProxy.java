@@ -70,28 +70,28 @@ public class PackageManagerProxy extends Binder {
         try {
             Utils.getField(PackageInfo.class, "CREATOR").set(null, creator);
         } catch (Throwable e) {
-            Log.e(TAG, "initPackageInfoCreator fail: ", e);
+            Log.w(TAG, "initPackageInfoCreator: " + e.getMessage());
         }
         try {
             Object cache = Utils.getField(PackageManager.class, "sPackageInfoCache").get(null);
             // noinspection ConstantConditions
             cache.getClass().getMethod("clear").invoke(cache);
         } catch (Throwable e) {
-            Log.e(TAG, "initPackageInfoCreator fail: ", e);
+            Log.w(TAG, "initPackageInfoCreator: " + e.getMessage());
         }
         try {
             Map<?, ?> mCreators = (Map<?, ?>) Utils.getField(Parcel.class, "mCreators").get(null);
             // noinspection ConstantConditions
             mCreators.clear();
         } catch (Throwable e) {
-            Log.e(TAG, "initPackageInfoCreator fail: ", e);
+            Log.w(TAG, "initPackageInfoCreator: " + e.getMessage());
         }
         try {
             Map<?, ?> sPairedCreators = (Map<?, ?>) Utils.getField(Parcel.class, "sPairedCreators").get(null);
             // noinspection ConstantConditions
             sPairedCreators.clear();
         } catch (Throwable e) {
-            Log.e(TAG, "initPackageInfoCreator fail: ", e);
+            Log.w(TAG, "initPackageInfoCreator: " + e.getMessage());
         }
     }
 
