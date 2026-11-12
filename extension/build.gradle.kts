@@ -21,12 +21,18 @@ kotlin {
 android {
     namespace = "com.kangrio.extension"
     compileSdk {
-        version = release(36)
+        version = release(37) {
+            minorApiLevel = 0
+        }
     }
 
     defaultConfig {
-        minSdk = 23
-        targetSdk = 36
+        minSdk {
+            version = release(24)
+        }
+        targetSdk {
+            version = release(37)
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21

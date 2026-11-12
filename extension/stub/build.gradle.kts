@@ -5,10 +5,14 @@ plugins {
 android {
     namespace = "com.kangrio.extension.stub"
     compileSdk {
-        version = release(36)
+        version = release(37) {
+            minorApiLevel = 0
+        }
     }
     defaultConfig {
-        minSdk = 23
+        minSdk {
+            version = release(24)
+        }
     }
     buildFeatures {
         aidl = true
