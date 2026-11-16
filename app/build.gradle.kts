@@ -68,9 +68,9 @@ configure<ApplicationExtension> {
         val baseVersionCode = 76
         val baseVersionName = "4.8.4"
 
-        val patchVersionCode = 8
-        versionCode = 7
-        versionName = "1.0.6"
+        val patchVersionCode = 9
+        versionCode = 8
+        versionName = "1.0.8"
 
         testInstrumentationRunner = "com.kangrio.gstore.HiltInstrumentationTestRunner"
         testInstrumentationRunnerArguments["disableAnalytics"] = "true"
