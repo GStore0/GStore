@@ -257,7 +257,7 @@ class UpdateWorker @AssistedInject constructor(
             // deleteInvalidUpdates, and the install event isn't delivered reliably when
             // the app replaces itself), so a previously shown self-update doesn't linger
             // after we've already updated to it.
-            val selfUpdate = if (canSelfUpdate) getSelfUpdate() else null
+            val selfUpdate = if (canSelfUpdate) getSelfUpdate(isForce) else null
             if (selfUpdate != null) {
                 updates.add(selfUpdate)
             } else {
@@ -281,7 +281,7 @@ class UpdateWorker @AssistedInject constructor(
      * bump, so newness is decided by the build timestamp there; release uses the version
      * code. Best-effort: any failure logs and yields no update.
      */
-    private suspend fun getSelfUpdate(): App? = withContext(Dispatchers.IO) {
+    private suspend fun getSelfUpdate(isForce: Boolean = false): App? = withContext(Dispatchers.IO) {
         val updateUrl = when (BuildType.CURRENT) {
             BuildType.RELEASE -> getSelfUpdateUrl(BuildType.CURRENT)
             BuildType.NIGHTLY -> getSelfUpdateUrl(BuildType.NIGHTLY)
@@ -296,7 +296,7 @@ class UpdateWorker @AssistedInject constructor(
                 json.decodeFromString<SelfUpdate>(it.body.string())
             }
 
-            val isNewer = when (BuildType.CURRENT) {
+            val isNewer = isForce || when (BuildType.CURRENT) {
                 BuildType.RELEASE -> selfUpdate.versionCode > BuildConfig.VERSION_CODE
                 BuildType.NIGHTLY -> selfUpdate.timestamp > BuildConfig.BUILD_TIMESTAMP
                 else -> false
