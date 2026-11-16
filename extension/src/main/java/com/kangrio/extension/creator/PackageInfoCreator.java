@@ -8,11 +8,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
+import com.kangrio.extension.LogUtils;
 import com.kangrio.extension.Utils;
 
 public class PackageInfoCreator implements Parcelable.Creator<PackageInfo> {
+    private static final String TAG = "PackageInfoCreator";
     Parcelable.Creator<PackageInfo> originalCreator = PackageInfo.CREATOR;
 
     @Override
@@ -22,7 +23,7 @@ public class PackageInfoCreator implements Parcelable.Creator<PackageInfo> {
         try {
             Application application = Utils.getApplication();
             if (application == null) {
-                Log.e("PackageInfoCreator", "application is null");
+                LogUtils.e(TAG, "application is null");
                 return packageInfo;
             }
 
@@ -40,7 +41,7 @@ public class PackageInfoCreator implements Parcelable.Creator<PackageInfo> {
             }
 
             if (packageInfo.signatures != null && packageInfo.signatures.length > 0) {
-                packageInfo.signatures = new Signature[]{ Utils.spoofSignature(packageInfo, signatureData) };
+                packageInfo.signatures = new Signature[]{Utils.spoofSignature(packageInfo, signatureData)};
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && packageInfo.signingInfo != null) {
@@ -50,7 +51,7 @@ public class PackageInfoCreator implements Parcelable.Creator<PackageInfo> {
                 }
             }
         } catch (Throwable e) {
-            Log.e("PackageInfoCreator", "createFromParcel", e);
+            LogUtils.e(TAG, "createFromParcel", e);
         }
 
         return packageInfo;

@@ -9,32 +9,29 @@ import android.content.BroadcastReceiver
 import android.content.ContentProvider
 import android.content.Intent
 import android.content.pm.ApplicationInfo
-import android.util.Log
-import org.lsposed.hiddenapibypass.HiddenApiBypass
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
 @SuppressLint("NewApi")
-class SpoofAppComponentFactory: AppComponentFactory() {
+class SpoofAppComponentFactory : AppComponentFactory() {
     private val TAG = "SpoofAppComponentFactory"
     var coreComponentFactory: Class<*>? = null
-    var  checkCompatWrapper: Method? = null
+    var checkCompatWrapper: Method? = null
 
-    private fun init() {
+    init {
         try {
-            HiddenApiBypass.addHiddenApiExemptions("L")
             coreComponentFactory = Class.forName("androidx.core.app.CoreComponentFactory")
             checkCompatWrapper = coreComponentFactory?.declaredMethods?.firstOrNull { m ->
                 Modifier.isStatic(m.modifiers) &&       // static
-                m.parameterCount == 1 &&                       // 1 param
-                m.parameterTypes[0] == Any::class.java &&      // param = Object
-                m.returnType == Any::class.java                // return = Object (due to type erasure)
+                        m.parameterCount == 1 &&                       // 1 param
+                        m.parameterTypes[0] == Any::class.java &&      // param = Object
+                        m.returnType == Any::class.java                // return = Object (due to type erasure)
             }?.apply {
                 isAccessible = true
             }
 
-        }catch (_: Throwable) {}
-        PackageManagerProxy.init()
+        } catch (_: Throwable) {
+        }
     }
 
     override fun instantiateActivity(
@@ -46,7 +43,7 @@ class SpoofAppComponentFactory: AppComponentFactory() {
     }
 
     override fun instantiateApplication(cl: ClassLoader, className: String): Application {
-        init()
+        EntryPoint.init()
         return checkCompatWrapper(super.instantiateApplication(cl, className))
     }
 
@@ -78,7 +75,7 @@ class SpoofAppComponentFactory: AppComponentFactory() {
 
             return obj
         } catch (e: Throwable) {
-            Log.w(TAG, $$"CoreComponentFactory$CompatWrapped is not being used", e)
+            LogUtils.w(TAG, $$"CoreComponentFactory$CompatWrapped is not being used", e)
         }
         return obj
     }

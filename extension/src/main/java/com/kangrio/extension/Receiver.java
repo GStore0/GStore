@@ -5,11 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
-import android.util.Log;
 
 import java.util.List;
 
 public class Receiver extends BroadcastReceiver {
+    private static final String TAG = "Receiver";
     public static final List<String> PACKAGE_ACTIONS = List.of(
             Intent.ACTION_PACKAGE_ADDED,
             Intent.ACTION_PACKAGE_REMOVED,
@@ -28,7 +28,7 @@ public class Receiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-        Log.d("Receiver", "onReceive: " + action);
+        LogUtils.i(TAG, "onReceive: " + action);
         if (action == null) return;
 
         if (PACKAGE_ACTIONS.contains(action)) {

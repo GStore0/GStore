@@ -17,7 +17,6 @@ import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.UserHandle;
 import android.util.ArrayMap;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -58,9 +57,9 @@ public class PackageManagerProxy extends Binder {
             if (sPackageManagerField != null) {
                 sPackageManagerField.set(null, iPackageManagerProxy);
             }
-            Log.d(TAG, "init success");
+            LogUtils.d(TAG, "init success");
         } catch (Throwable e) {
-            Log.e(TAG, "init fail: ", e);
+            LogUtils.e(TAG, "init fail: ", e);
         }
     }
 
@@ -70,28 +69,28 @@ public class PackageManagerProxy extends Binder {
         try {
             Utils.getField(PackageInfo.class, "CREATOR").set(null, creator);
         } catch (Throwable e) {
-            Log.w(TAG, "initPackageInfoCreator: " + e.getMessage());
+            LogUtils.w(TAG, "initPackageInfoCreator: " + e.getMessage());
         }
         try {
             Object cache = Utils.getField(PackageManager.class, "sPackageInfoCache").get(null);
             // noinspection ConstantConditions
             cache.getClass().getMethod("clear").invoke(cache);
         } catch (Throwable e) {
-            Log.w(TAG, "initPackageInfoCreator: " + e.getMessage());
+            LogUtils.w(TAG, "initPackageInfoCreator: " + e.getMessage());
         }
         try {
             Map<?, ?> mCreators = (Map<?, ?>) Utils.getField(Parcel.class, "mCreators").get(null);
             // noinspection ConstantConditions
             mCreators.clear();
         } catch (Throwable e) {
-            Log.w(TAG, "initPackageInfoCreator: " + e.getMessage());
+            LogUtils.w(TAG, "initPackageInfoCreator: " + e.getMessage());
         }
         try {
             Map<?, ?> sPairedCreators = (Map<?, ?>) Utils.getField(Parcel.class, "sPairedCreators").get(null);
             // noinspection ConstantConditions
             sPairedCreators.clear();
         } catch (Throwable e) {
-            Log.w(TAG, "initPackageInfoCreator: " + e.getMessage());
+            LogUtils.w(TAG, "initPackageInfoCreator: " + e.getMessage());
         }
     }
 
@@ -100,11 +99,12 @@ public class PackageManagerProxy extends Binder {
         this.iPackageManager = IPackageManager.Stub.asInterface(iBinder);
         this.transactionCodes = initTransactionCodes();
 
-        try{
+        try {
             Method getMyUserId = UserHandle.class.getDeclaredMethod("myUserId");
             getMyUserId.setAccessible(true);
             this.userId = (int) getMyUserId.invoke(null);
-        } catch (Throwable ignore) {}
+        } catch (Throwable ignore) {
+        }
     }
 
     private boolean transactOriginal(int code, @NonNull Parcel data, @Nullable Parcel reply, int flags) throws RemoteException {

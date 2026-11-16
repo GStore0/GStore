@@ -7,7 +7,6 @@ import android.content.pm.Signature;
 import android.content.pm.SigningInfo;
 import android.util.ArrayMap;
 import android.util.Base64;
-import android.util.Log;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -60,22 +59,26 @@ public class Utils {
             currentApplication.setAccessible(true);
             application = (Application) currentApplication.invoke(null);
         } catch (Throwable e) {
-            Log.e(TAG, "getApplication", e);
+            LogUtils.e(TAG, "getApplication", e);
         }
 
         return application;
     }
 
     public static void clearSpoofCache(String packageName) {
-        Log.d(TAG, "Clear spoof cache: " + packageName);
-        mSignatureCache.remove(packageName);
-        mSigningInfoCache.remove(packageName);
+        LogUtils.d(TAG, "Clear spoof cache: " + packageName);
+        synchronized (mSignatureCache) {
+            mSignatureCache.remove(packageName);
+        }
+        synchronized (mSigningInfoCache) {
+            mSigningInfoCache.remove(packageName);
+        }
     }
 
     public static Signature spoofSignature(PackageInfo packageInfo, String signatureData) {
         Signature cache = mSignatureCache.get(packageInfo.packageName);
         if (cache != null) {
-            Log.d(TAG, "[CACHE] Spoofed signature: " + packageInfo.packageName + " " + sigToShar1(cache));
+            LogUtils.d(TAG, "[CACHE] Spoofed signature: " + packageInfo.packageName + " " + sigToShar1(cache));
             return cache;
         }
 
@@ -86,7 +89,7 @@ public class Utils {
         byte[] signatureByte = Base64.decode(signatureData, Base64.DEFAULT);
         Signature signature = new Signature(signatureByte);
 
-        Log.d(TAG, "Spoofed signature: " + packageInfo.packageName + " " + sigToShar1(signature));
+        LogUtils.d(TAG, "Spoofed signature: " + packageInfo.packageName + " " + sigToShar1(signature));
         synchronized (mSignatureCache) {
             mSignatureCache.put(packageInfo.packageName, signature);
         }
