@@ -564,13 +564,11 @@ var Entry.valueAsString: String
         this.dataAsString = value
     }
 
-class ValueType {
-    companion object {
-        val BOOLEAN = DataType.BOOLEAN
-        val DEC = DataType.DEC
-        val HEX = DataType.HEX
-        val FLOAT = DataType.FLOAT
-        val STRING = DataType.STRING
-        val REFERENCE = DataType.REFERENCE
-    }
+object ValueType {
+    val BOOLEAN = DataType.BOOLEAN
+    val DEC = DataType.DEC
+    val HEX = DataType.HEX
+    val FLOAT = DataType.FLOAT
+    val STRING = DataType.STRING
+    val REFERENCE = DataType.REFERENCE
 }
