@@ -2,6 +2,7 @@ package com.kangrio.gstore.patch.morphe
 
 import android.content.Context
 import android.util.Log
+import androidx.annotation.Keep
 import app.morphe.patcher.Patcher
 import app.morphe.patcher.PatcherConfig
 import app.morphe.patcher.apk.ApkMerger
@@ -12,19 +13,18 @@ import app.morphe.patcher.patch.PatchLoader
 import app.morphe.patcher.patch.ResourcePatch
 import app.morphe.patcher.patch.loadPatchesFromDex
 import app.morphe.patcher.patch.resourcePatch
-import com.kangrio.gstore.patch.morphe.Constant.RELEASE_URL
-import com.kangrio.gstore.util.Preferences
 import kotlinx.coroutines.runBlocking
-import okhttp3.OkHttpClient
 import org.w3c.dom.Element
 import java.io.File
 
+@Keep
 class MorphePatcherRuntime(
     val context: Context,
-    val packageName: String
+    val packageName: String,
+    val bundleFile: File,
+    val currentVersion: String
 ) {
     private val patcherDir = File(context.cacheDir, "morphe").apply { mkdirs() }
-    private val patchFile = File(patcherDir, "patches.mpp")
     private val packageDir = File(patcherDir, packageName).apply { mkdirs() }
     private val workDir = File(packageDir, "patch_${System.currentTimeMillis()}").apply { mkdirs() }
     private val baseApkFile = File(packageDir, "original.apk").apply { delete() }
@@ -103,12 +103,8 @@ class MorphePatcherRuntime(
         }
     }
 
-    private fun isPatchAvailable(): Boolean {
-        return patchFile.exists() && patchFile.length() > 0
-    }
-
     private fun getLatestPatchDex(): PatchLoader.Dex? {
-        val patchBundle = getLatestPatchBundle() ?: return null
+        val patchBundle = bundleFile
         val patchesDex = try {
             patchBundle.setReadOnly()
             loadPatchesFromDex(setOf(patchBundle), patchBundle.parentFile)
@@ -119,37 +115,6 @@ class MorphePatcherRuntime(
             patchBundle.setWritable(true)
         }
         return patchesDex
-    }
-
-    private fun getLatestPatchBundle(): File? {
-        val currentVersion = Preferences.getString(context, "morphe_patch_version", "")
-        if (isPatchAvailable() && MorpheUtils.isLatestPatchAvailable(currentVersion).not()) {
-            return patchFile
-        }
-        val client = OkHttpClient()
-
-        return try {
-            val releaseJson = client.getText(RELEASE_URL)
-            val release = releaseJson.jsonToGitHubRelease()
-
-            val asset = release.assets.firstOrNull {
-                it.name.endsWith(".mpp", ignoreCase = true)
-            } ?: return null
-
-            val patchBytes = client.getBytes(asset.browser_download_url)
-
-            patchFile.parentFile?.mkdirs()
-            patchFile.writeBytes(patchBytes)
-
-            Log.d(TAG, "Patches downloaded: ${patchFile.absolutePath}")
-            Preferences.putString(context, "morphe_patch_version", release.tag_name.substring(1))
-            patchFile
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        } finally {
-            client.dispatcher.executorService.shutdown()
-        }
     }
 
     private fun selectPatches(
@@ -195,7 +160,6 @@ class MorphePatcherRuntime(
                 useBytecodeMode = BytecodeMode.STRIP_FAST
             )
         ).use { patcher ->
-            val currentVersion = Preferences.getString(context, "morphe_patch_version", "")
             patcher += patches + morpheVersionPatch(currentVersion)
 
             runBlocking {

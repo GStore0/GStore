@@ -50,4 +50,5 @@ dependencyResolutionManagement {
 include(":app")
 include(":extension")
 include(":extension:stub")
+include(":morphe-runtime")
 rootProject.name = "GStore"

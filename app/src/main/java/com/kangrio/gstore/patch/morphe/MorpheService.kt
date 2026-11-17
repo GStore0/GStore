@@ -10,11 +10,19 @@ import java.io.File
 
 class MorpheService : Service() {
     val binder = object : IMorpheService.Stub() {
-        override fun startPatch(packageName: String, apksDir: String, outputFile : String, callback: IProgressCallback): Boolean {
+        override fun startPatch(
+            packageName: String,
+            apksDir: String,
+            outputFile: String,
+            bundlePath: String,
+            patchVersion: String,
+            callback: IProgressCallback
+        ): Boolean {
             val apksDir = File(apksDir)
             val outputFile = File(outputFile)
+            val bundleFile = File(bundlePath)
 
-            val morpher = MorphePatcherRuntime(this@MorpheService, packageName)
+            val morpher = MorphePatcherRuntime(this@MorpheService, packageName, bundleFile, patchVersion)
             val result = morpher.patch(apksDir, outputFile) {
                 callback.onProgress(it)
             }

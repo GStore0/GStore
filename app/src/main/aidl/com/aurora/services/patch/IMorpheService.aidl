@@ -3,5 +3,5 @@ package com.aurora.services.patch;
 import com.aurora.services.patch.IProgressCallback;
 
 interface IMorpheService {
-    boolean startPatch(in String packageName, in String apksDir, in String outputFile, in IProgressCallback callback);
+    boolean startPatch(in String packageName, in String apksDir, in String outputFile, in String bundlePath, in String patchVersion, in IProgressCallback callback);
 }

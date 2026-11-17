@@ -205,8 +205,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
 
     // morphe
-    implementation("app.morphe:morphe-library:1.4.0:")
-    implementation("app.morphe:morphe-patcher:2.4.0")
+    implementation(project(":morphe-runtime"))
     implementation("org.jsoup:jsoup:1.23.2")
 
     // Markdown
