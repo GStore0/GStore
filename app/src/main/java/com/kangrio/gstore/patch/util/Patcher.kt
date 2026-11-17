@@ -19,7 +19,8 @@ import com.reandroid.arsc.chunk.TableBlock
 import com.reandroid.arsc.chunk.xml.AndroidManifestBlock
 import com.reandroid.arsc.chunk.xml.ResXmlAttribute
 import com.reandroid.arsc.chunk.xml.ResXmlElement
-import com.reandroid.arsc.value.ValueType
+import com.reandroid.arsc.value.DataType
+import com.reandroid.arsc.value.Entry
 import java.io.File
 import java.io.InputStream
 
@@ -271,7 +272,7 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         return ""
     }
 
-    fun addMetaData(apkModule: ApkModule, name: String, value: Any, valueType: ValueType = ValueType.STRING) {
+    fun addMetaData(apkModule: ApkModule, name: String, value: Any, valueType: DataType = ValueType.STRING) {
         val application: ResXmlElement = apkModule.androidManifest.applicationElement
 
         application.newElement(AndroidManifest.TAG_meta_data).apply {
@@ -438,7 +439,7 @@ class Patcher(val context: Context, val packageName: String, val apkFiles: List<
         addMicroGSettings(apkModule, "location_ichnaea_contribute", false, ValueType.BOOLEAN)
     }
 
-    fun addMicroGSettings(apkModule: ApkModule, name: String, value: Any, valueType: ValueType) {
+    fun addMicroGSettings(apkModule: ApkModule, name: String, value: Any, valueType: DataType) {
         addMetaData(apkModule, "$MICROG_SETTINGS_PROVIDER_AUTHORITY.$name", value, valueType)
     }
 
@@ -527,4 +528,49 @@ fun AndroidManifestBlock.setApplicationHasCode(hasCode: Boolean) {
     val applicationElement = this.getOrCreateApplicationElement()
     val hasCodeAttribute = applicationElement.getOrCreateAndroidAttribute("hasCode", android.R.attr.hasCode)
     hasCodeAttribute.valueAsBoolean = hasCode
+}
+
+var ResXmlAttribute.valueAsBoolean: Boolean
+    get() = this.dataAsBoolean
+    set(value) {
+        this.setValueAsBoolean(value)
+    }
+
+fun ResXmlAttribute.setValueAsDecimal(value: Int) {
+    this.setDataAsDecimal(value)
+}
+
+var ResXmlAttribute.valueAsFloat: Float
+    get() = this.dataAsFloat
+    set(value) {
+        this.setDataAsFloat(value)
+    }
+
+var ResXmlAttribute.valueAsResourceId: Int
+    get() = this.dataAsResourceId
+    set(value) {
+        this.setDataAsResourceId(value)
+    }
+
+var ResXmlAttribute.valueAsString: String
+    get() = this.dataAsString
+    set(value) {
+        this.dataAsString = value
+    }
+
+var Entry.valueAsString: String
+    get() = this.dataAsString
+    set(value) {
+        this.dataAsString = value
+    }
+
+class ValueType {
+    companion object {
+        val BOOLEAN = DataType.BOOLEAN
+        val DEC = DataType.DEC
+        val HEX = DataType.HEX
+        val FLOAT = DataType.FLOAT
+        val STRING = DataType.STRING
+        val REFERENCE = DataType.REFERENCE
+    }
 }

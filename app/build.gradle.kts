@@ -206,14 +206,14 @@ dependencies {
 
     // morphe
     implementation("app.morphe:morphe-library:1.4.0:")
-    implementation("app.morphe:morphe-patcher:2.3.0")
+    implementation("app.morphe:morphe-patcher:2.4.0")
     implementation("org.jsoup:jsoup:1.23.2")
 
     // Markdown
     implementation("org.jetbrains:markdown:0.7.9")
 
     // patcher
-    implementation("com.github.MorpheApp:ARSCLib:675bed2de3")
+    implementation("com.github.MorpheApp:ARSCLib:50418a07a8")
     implementation("com.android.tools.build:apksig:8.8.0")
     implementation("org.bouncycastle:bcpkix-jdk18on:1.83")
 
