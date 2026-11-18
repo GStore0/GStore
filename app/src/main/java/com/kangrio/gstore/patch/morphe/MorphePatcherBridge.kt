@@ -10,6 +10,7 @@ import com.aurora.services.patch.IMorpheService
 import com.aurora.services.patch.IProgressCallback
 import com.kangrio.gstore.extensions.TAG
 import com.kangrio.gstore.patch.ConstantsPatch.MORPHE_PATCHES_RELEASE_URL
+import com.kangrio.gstore.patch.ConstantsPatch.PREFERENCE_MORPHE_PATCH_VERSION
 import com.kangrio.gstore.util.Preferences
 import okhttp3.OkHttpClient
 import java.io.File
@@ -47,7 +48,7 @@ class MorphePatcherBridge(
         private fun getLatestPatchBundle(context: Context): File? {
             val patcherDir = File(context.cacheDir, "morphe").apply { mkdirs() }
             val patchFile = File(patcherDir, "patches.mpp")
-            val currentVersion = Preferences.getString(context, "morphe_patch_version", "")
+            val currentVersion = Preferences.getString(context, PREFERENCE_MORPHE_PATCH_VERSION, "")
 
             if (isPatchAvailable(patchFile) && MorpheUtils.isLatestPatchAvailable(context, currentVersion).not()) {
                 return patchFile
@@ -69,7 +70,7 @@ class MorphePatcherBridge(
                 patchFile.writeBytes(patchBytes)
 
                 Log.d(TAG, "Patches downloaded: ${patchFile.absolutePath}")
-                Preferences.putString(context, "morphe_patch_version", release.tag_name.substring(1))
+                Preferences.putString(context, PREFERENCE_MORPHE_PATCH_VERSION, release.tag_name.substring(1))
                 patchFile
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -81,7 +82,7 @@ class MorphePatcherBridge(
 
         fun patch(context: Context, packageName: String, apksDir: File, outputFile: File, onProgress: (String) -> Unit): Map<Boolean, File> {
             val bundleFile = getLatestPatchBundle(context) ?: return mapOf(false to outputFile)
-            val currentVersion = Preferences.getString(context, "morphe_patch_version", "")
+            val currentVersion = Preferences.getString(context, PREFERENCE_MORPHE_PATCH_VERSION, "")
             val success = getService(context).startPatch(packageName, apksDir.absolutePath, outputFile.absolutePath, bundleFile.absolutePath, currentVersion, object : IProgressCallback.Stub() {
                 override fun onProgress(progress: String) {
                     onProgress(progress)

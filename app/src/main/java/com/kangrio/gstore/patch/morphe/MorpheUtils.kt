@@ -6,7 +6,7 @@ import com.aurora.gplayapi.data.serializers.LocaleSerializer
 import com.aurora.gplayapi.data.serializers.PropertiesSerializer
 import com.kangrio.gstore.patch.ConstantsPatch.MORPHE_PATCHES_RELEASE_URL
 import com.kangrio.gstore.patch.ConstantsPatch.MORPHE_PATCHES_TAGS_URL
-import com.kangrio.gstore.patch.ConstantsPatch.PREFERENCE_MORPHE_LATEST_PATCH
+import com.kangrio.gstore.patch.ConstantsPatch.PREFERENCE_MORPHE_LATEST_PATCH_VERSION
 import com.kangrio.gstore.patch.data.Asset
 import com.kangrio.gstore.patch.data.GitHubRelease
 import com.kangrio.gstore.util.Preferences
@@ -48,11 +48,11 @@ object MorpheUtils {
 
     suspend fun storeLatestPatch(context: Context) = withContext(Dispatchers.IO) {
         val latestPatch = getLatestPatchVersion()
-        Preferences.putString(context, PREFERENCE_MORPHE_LATEST_PATCH, latestPatch)
+        Preferences.putString(context, PREFERENCE_MORPHE_LATEST_PATCH_VERSION, latestPatch)
     }
 
     fun getLatestStorePatchVersion(context: Context): String {
-        return Preferences.getString(context, PREFERENCE_MORPHE_LATEST_PATCH, "")
+        return Preferences.getString(context, PREFERENCE_MORPHE_LATEST_PATCH_VERSION, "")
     }
 
     private fun getLatestPatchVersion(): String {
