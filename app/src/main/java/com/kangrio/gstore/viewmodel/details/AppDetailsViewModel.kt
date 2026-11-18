@@ -561,7 +561,7 @@ class AppDetailsViewModel @Inject constructor(
     private fun getMorpheVersion(app: App): App? {
         if (app.packageName !in MorpheApp.apps.keys) return app
 
-        val compatibleVersions = MorphePatcherBridge.latestCompatibleVersion(app.packageName)
+        val compatibleVersions = MorphePatcherBridge.latestCompatibleVersion(context, app.packageName)
         if (compatibleVersions.isEmpty()) return null
         return app.copy(
             versionName = compatibleVersions.keys.first(),

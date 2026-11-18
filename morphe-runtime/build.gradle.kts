@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.library)
 }
 
+val morphePatcherVersionName = "2.4.0"
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
@@ -22,6 +24,8 @@ android {
 //        targetSdk {
 //            version = release(37)
 //        }
+
+        buildConfigField("String", "MORPHE_PATCHER_VERSION_NAME", "\"$morphePatcherVersionName\"")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
@@ -37,13 +41,21 @@ android {
                 "proguard-rules.pro"
             )
         }
+        register("nightly") {
+            initWith(getByName("release"))
+            matchingFallbacks += "release"
+        }
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 }
 
 dependencies {
     // morphe
     implementation("app.morphe:morphe-library:1.4.0:")
-    implementation("app.morphe:morphe-patcher:2.4.0")
+    implementation("app.morphe:morphe-patcher:$morphePatcherVersionName")
 
     compileOnly(libs.androidx.core.ktx)
 }

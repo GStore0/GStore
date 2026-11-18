@@ -42,7 +42,7 @@ object PackageUtilPatch {
             // prebuild apk patched with morphe-patches
             if (packageName in MorpheApp.apps.keys && isMorphePatch(context, packageName)) {
                 val currentVersion = morpheVersion(context, packageName)
-                return MorpheUtils.isLatestPatchAvailable(currentVersion)
+                return MorpheUtils.isLatestPatchAvailable(context, currentVersion)
             }
 
             // original apps

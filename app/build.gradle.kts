@@ -207,6 +207,7 @@ dependencies {
     // morphe
     implementation(project(":morphe-runtime"))
     implementation("org.jsoup:jsoup:1.23.2")
+    implementation("org.tomlj:tomlj:2.2.0")
 
     // Markdown
     implementation("org.jetbrains:markdown:0.7.9")

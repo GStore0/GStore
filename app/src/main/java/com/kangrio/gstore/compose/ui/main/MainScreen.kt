@@ -36,6 +36,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kangrio.gstore.GStoreApp
 import com.kangrio.gstore.extensions.requiresObbDir
 import com.kangrio.gstore.MainViewModel
 import com.kangrio.gstore.R
@@ -56,6 +57,7 @@ import com.kangrio.gstore.data.model.StorageRequirement
 import com.kangrio.gstore.data.providers.PermissionProvider.Companion.isGranted
 import com.kangrio.gstore.data.room.update.Update
 import com.kangrio.gstore.patch.compose.composable.WelcomeDialog
+import com.kangrio.gstore.patch.morphe.MorpheUtils
 import com.kangrio.gstore.util.PackageUtil
 import com.kangrio.gstore.util.Preferences
 import com.kangrio.gstore.util.Preferences.PREFERENCE_UPDATES_WARN_TRACKERS
@@ -108,6 +110,12 @@ fun MainScreen(
     }
     var storageWarning by remember { mutableStateOf<StorageRequirement?>(null) }
     val checkingJobs = remember { mutableStateMapOf<String, Job>() }
+
+    LaunchedEffect(Unit) {
+        GStoreApp.scope.launch {
+            MorpheUtils.storeLatestPatch(context)
+        }
+    }
 
     // A blocked update never produces a download, so the effect below can't clear its marker.
     LaunchedEffect(Unit) {

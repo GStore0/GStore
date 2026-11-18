@@ -9,7 +9,7 @@ import android.util.Log
 import com.aurora.services.patch.IMorpheService
 import com.aurora.services.patch.IProgressCallback
 import com.kangrio.gstore.extensions.TAG
-import com.kangrio.gstore.patch.morphe.Constant.RELEASE_URL
+import com.kangrio.gstore.patch.ConstantsPatch.MORPHE_PATCHES_RELEASE_URL
 import com.kangrio.gstore.util.Preferences
 import okhttp3.OkHttpClient
 import java.io.File
@@ -49,13 +49,14 @@ class MorphePatcherBridge(
             val patchFile = File(patcherDir, "patches.mpp")
             val currentVersion = Preferences.getString(context, "morphe_patch_version", "")
 
-            if (isPatchAvailable(patchFile) && MorpheUtils.isLatestPatchAvailable(currentVersion).not()) {
+            if (isPatchAvailable(patchFile) && MorpheUtils.isLatestPatchAvailable(context, currentVersion).not()) {
                 return patchFile
             }
             val client = OkHttpClient()
 
             return try {
-                val releaseJson = client.getText(RELEASE_URL)
+                val latestPatchVersion = MorpheUtils.getLatestStorePatchVersion(context)
+                val releaseJson = client.getText("${MORPHE_PATCHES_RELEASE_URL}/tags/v${latestPatchVersion}")
                 val release = releaseJson.jsonToGitHubRelease()
 
                 val asset = release.assets.firstOrNull {
@@ -89,8 +90,8 @@ class MorphePatcherBridge(
             return mapOf(success to outputFile)
         }
 
-        fun latestCompatibleVersion(packageName: String): Map<String, Long> {
-            return MorpheUtils.getLatestCompatibleVersion(packageName)
+        fun latestCompatibleVersion(context: Context, packageName: String): Map<String, Long> {
+            return MorpheUtils.getLatestCompatibleVersion(context, packageName)
         }
     }
 }

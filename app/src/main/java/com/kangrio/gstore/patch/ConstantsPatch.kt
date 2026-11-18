@@ -12,7 +12,12 @@ object ConstantsPatch {
     const val META_DATA_PATCH_VERSION_CODE = "com.kangrio.extension.patch_version_code"
     const val META_DATA_ENABLE_CRASH_REPORT = "com.kangrio.extensions.enable_crash_report"
 
+    const val MORPHE_PATCHES_TAGS_URL = "https://raw.githubusercontent.com/MorpheApp/morphe-patches/refs/tags"
+    const val MORPHE_PATCHES_RELEASE_URL = "https://api.github.com/repos/MorpheApp/morphe-patches/releases"
+    const val APK_MIRROR_BASE_URL = "https://www.apkmirror.com/apk"
+
     // Prefs
     const val USE_MORPHE_PATCH_IF_AVAILABLE = "use_morphe_patch_if_available"
+    const val PREFERENCE_MORPHE_LATEST_PATCH = "PREFERENCE_MORPHE_LATEST_PATCH"
     const val PREFERENCE_UPDATES_FORCE = "PREFERENCE_UPDATES_FORCE"
 }

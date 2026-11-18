@@ -1,13 +1,11 @@
 package com.kangrio.gstore.patch.morphe
 
+import com.kangrio.gstore.patch.ConstantsPatch.APK_MIRROR_BASE_URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
 
 object ApkMirror {
-
-    private const val BASE_URL = "https://www.apkmirror.com/apk"
-
     suspend fun getVersionCode(
         org: String,
         appName: String,
@@ -21,7 +19,7 @@ object ApkMirror {
             val appSlug = slug(appName)
             val versionSlug = slug(versionName)
 
-            val url = "$BASE_URL/$orgSlug/$appSlug/" +
+            val url = "$APK_MIRROR_BASE_URL/$orgSlug/$appSlug/" +
                     "$appSlug-$versionSlug-release/"
 
             val doc = Jsoup.connect(url)

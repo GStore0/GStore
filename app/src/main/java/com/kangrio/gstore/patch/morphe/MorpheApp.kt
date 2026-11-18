@@ -1,12 +1,11 @@
 package com.kangrio.gstore.patch.morphe
 
+import android.content.Context
+import com.kangrio.gstore.patch.ConstantsPatch.MORPHE_PATCHES_TAGS_URL
 import java.net.HttpURLConnection
 import java.net.URL
 
 object MorpheApp {
-
-    private const val BASE_URL = "https://raw.githubusercontent.com/MorpheApp/morphe-patches/refs/tags"
-
     enum class App(
         val packageName: String,
         val path: String
@@ -38,9 +37,9 @@ object MorpheApp {
         App.YOUTUBE_MUSIC.packageName to "YTMusic"
     )
 
-    fun get(app: App): List<Target> {
-        val latestPatchVersion = MorpheUtils.getLatestPatchVersion()
-        val source = download("$BASE_URL/v$latestPatchVersion/${app.path}")
+    fun get(context: Context, app: App): List<Target> {
+        val latestPatchVersion = MorpheUtils.getLatestStorePatchVersion(context)
+        val source = download("${MORPHE_PATCHES_TAGS_URL}/v$latestPatchVersion/${app.path}")
 
         // Match each AppTarget(...) block, including multiline arguments.
         val targetPattern = Regex(
@@ -76,35 +75,41 @@ object MorpheApp {
         }.toList()
     }
 
-    fun get(packageName: String): List<Target> =
-        App.fromPackageName(packageName).let(::get)
+    fun get(context: Context, packageName: String): List<Target> =
+        get(context, App.fromPackageName(packageName))
 
-    fun getAll(): List<Target> =
-        App.entries.flatMap(::get)
+    fun getAll(context: Context): List<Target> =
+        App.entries.flatMap{
+            get(context, it)
+        }
 
     fun getLatestVersion(
+        context: Context,
         app: App,
         includeExperimental: Boolean = false
-    ): String? = get(app)
+    ): String? = get(context, app)
         .firstOrNull { includeExperimental || !it.isExperimental }
         ?.version
 
     fun getLatestVersion(
+        context: Context,
         packageName: String,
         includeExperimental: Boolean = false
-    ): String? = getLatestVersion(App.fromPackageName(packageName), includeExperimental)
+    ): String? = getLatestVersion(context, App.fromPackageName(packageName), includeExperimental)
 
     fun getAllVersion(
+        context: Context,
         app: App,
         includeExperimental: Boolean = false
-    ): List<String> = get(app).mapNotNull {
+    ): List<String> = get(context, app).mapNotNull {
         if (includeExperimental || !it.isExperimental) it.version else null
     }
 
     fun getAllVersion(
+        context: Context,
         packageName: String,
         includeExperimental: Boolean = false
-    ): List<String> = getAllVersion(App.fromPackageName(packageName), includeExperimental)
+    ): List<String> = getAllVersion(context, App.fromPackageName(packageName), includeExperimental)
 
     private fun download(url: String): String {
         val connection = URL(url).openConnection() as HttpURLConnection
