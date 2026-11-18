@@ -4,6 +4,8 @@ import json
 import os
 import subprocess
 import sys
+import urllib.request
+import shutil
 
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,6 +19,12 @@ ICON_URL = (
 
 
 def run(command):
+    binary = shutil.which(command[0])
+
+    if not binary:
+        raise FileNotFoundError(f"Command not found: {command[0]}")
+
+    command[0] = binary
     return subprocess.check_output(
         command,
         text=True
@@ -51,6 +59,45 @@ def get_apk_info(apk):
     return version_name, version_code
 
 
+def get_previous_release_tag(repository, current_tag, build_type):
+    url = (
+        f"https://api.github.com/repos/{repository}/releases"
+        "?per_page=100"
+    )
+
+    headers = {
+        "Accept": "application/vnd.github+json"
+    }
+
+    token = os.environ.get("GITHUB_TOKEN")
+
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    request = urllib.request.Request(url, headers=headers)
+
+    with urllib.request.urlopen(request) as response:
+        releases = json.loads(response.read())
+
+    prerelease = build_type == "nightly"
+
+    filtered_releases = [
+        release["tag_name"]
+        for release in releases
+        if release["prerelease"] == prerelease and not release["draft"]
+    ]
+
+    if current_tag in filtered_releases:
+        index = filtered_releases.index(current_tag) + 1
+    else:
+        index = 0
+
+    if index >= len(filtered_releases):
+        raise RuntimeError("Previous release not found")
+
+    return filtered_releases[index]
+
+
 def generate_metadata(apk, build_type):
     repository = os.environ["GITHUB_REPOSITORY"]
     tag = os.environ["GITHUB_REF_NAME"]
@@ -65,7 +112,7 @@ def generate_metadata(apk, build_type):
         f"https://github.com/{repository}/releases/latest/download/"
         f"{filename}"
     )
-    
+
     if build_type == "nightly":
         download_url = (
             f"https://github.com/{repository}/releases/download/"
@@ -73,12 +120,13 @@ def generate_metadata(apk, build_type):
             f"{filename}"
         )
 
+    previous_tag = get_previous_release_tag(repository, tag, build_type)
+
     changelog = run([
         "git",
         "log",
-        "-1",
-        "--format=%B",
-        "HEAD"
+        f"{previous_tag}..{tag}",
+        "--pretty=format:- %s"
     ])
 
     last_commit_timestamp = run([
