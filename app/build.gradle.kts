@@ -214,7 +214,6 @@ dependencies {
     implementation("org.jetbrains:markdown:0.7.9")
 
     // patcher
-    implementation("com.github.MorpheApp:ARSCLib:50418a07a8")
     implementation("com.android.tools.build:apksig:8.8.0")
     implementation("org.bouncycastle:bcpkix-jdk18on:1.83")
 

@@ -50,8 +50,8 @@ android {
 
 dependencies {
     // morphe
-    implementation("app.morphe:morphe-library:1.4.0:")
-    implementation("app.morphe:morphe-patcher:$morphePatcherVersionName")
+    api("app.morphe:morphe-patcher:$morphePatcherVersionName")
+    api("com.github.MorpheApp:ARSCLib:50418a07a8")
 
     compileOnly(libs.androidx.core.ktx)
 }
