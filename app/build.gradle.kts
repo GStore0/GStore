@@ -123,6 +123,7 @@ configure<ApplicationExtension> {
 
         register("nightly") {
             initWith(getByName("release"))
+            matchingFallbacks += listOf("release")
             applicationIdSuffix = ".nightly"
             versionNameSuffix = "-${lastCommitHash.get()}"
         }

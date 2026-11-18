@@ -41,10 +41,6 @@ android {
                 "proguard-rules.pro"
             )
         }
-        register("nightly") {
-            initWith(getByName("release"))
-            matchingFallbacks += "release"
-        }
     }
 
     buildFeatures {
