@@ -9,6 +9,7 @@ import android.os.Looper;
 import org.lsposed.hiddenapibypass.HiddenApiBypass;
 
 public class EntryPoint {
+    private static String TAG = "EntryPoint";
     static Handler handler = null;
 
     public static void init() {
@@ -27,15 +28,22 @@ public class EntryPoint {
                         handler.postDelayed(this, 2000);
                         return;
                     }
-
-                    if (Build.VERSION.SDK_INT >= 33) {
-                        app.registerReceiver(new Receiver(), Receiver.INTENT_FILTER, Context.RECEIVER_EXPORTED);
-                    } else {
-                        app.registerReceiver(new Receiver(), Receiver.INTENT_FILTER);
-                    }
+                    registerReceiver(app);
                 }
             }, 2000);
         } catch (Throwable ignore) {
+        }
+    }
+
+    private static void registerReceiver(Context context) {
+        try {
+            if (Build.VERSION.SDK_INT >= 33) {
+                context.registerReceiver(new Receiver(), Receiver.INTENT_FILTER, Context.RECEIVER_EXPORTED);
+            } else {
+                context.registerReceiver(new Receiver(), Receiver.INTENT_FILTER);
+            }
+        } catch (Throwable e) {
+            LogUtils.w(TAG, "registerReceiver: ", e);
         }
     }
 }
