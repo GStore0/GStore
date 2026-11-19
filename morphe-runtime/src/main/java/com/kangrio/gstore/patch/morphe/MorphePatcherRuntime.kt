@@ -10,9 +10,9 @@ import app.morphe.patcher.apk.ApkUtils.applyTo
 import app.morphe.patcher.dex.BytecodeMode
 import app.morphe.patcher.patch.Patch
 import app.morphe.patcher.patch.PatchLoader
-import app.morphe.patcher.patch.ResourcePatch
+import app.morphe.patcher.patch.document
 import app.morphe.patcher.patch.loadPatchesFromDex
-import app.morphe.patcher.patch.resourcePatch
+import com.kangrio.morphe.BuildConfig
 import kotlinx.coroutines.runBlocking
 import org.w3c.dom.Element
 import java.io.File
@@ -44,8 +44,8 @@ class MorphePatcherRuntime(
         return result
     }
 
-    fun morpheVersionPatch(patchVersion: String): ResourcePatch {
-        return resourcePatch(default = true, name = "Morphe version") {
+    fun morpheVersionPatch(patchVersion: String): Patch {
+        return app.morphe.patcher.patch.patch(default = true, name = "Morphe version") {
             execute {
                 document("AndroidManifest.xml").use { document ->
                     val applicationNode = document
@@ -157,7 +157,8 @@ class MorphePatcherRuntime(
             PatcherConfig(
                 apkFile = baseApkFile,
                 temporaryFilesPath = workDir,
-                useBytecodeMode = BytecodeMode.STRIP_FAST
+                useBytecodeMode = BytecodeMode.STRIP_FAST,
+                targetPatcherVersion = BuildConfig.MORPHE_PATCHER_VERSION_NAME
             )
         ).use { patcher ->
             patcher += patches + morpheVersionPatch(currentVersion)
