@@ -155,6 +155,8 @@ GStore builds upon the work of existing open-source projects, including:
 - [ARSCLib](https://github.com/REAndroid/ARSCLib) — Android resource manipulation library.
 - [AndroidHiddenApiBypass](https://github.com/LSPosed/AndroidHiddenApiBypass) — Access to restricted Android APIs.
 - [microG](https://github.com/microg) — Open-source implementations of selected Google services.
+- [MorpheApp](https://github.com/MorpheApp) — an Android app modification tool.
+- [And64InlineHook](https://github.com/rprop/and64inlinehook) — Lightweight ARMv8 Inline Hook Library for Android C/C++
 
 See the project's source code, license files, and third-party notices for additional attribution and licensing information.
 
