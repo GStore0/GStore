@@ -6,6 +6,8 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.kangrio.extension.netflix.NetflixDontKill;
+
 import org.lsposed.hiddenapibypass.HiddenApiBypass;
 
 public class EntryPoint {
@@ -19,6 +21,7 @@ public class EntryPoint {
             }
             handler = new Handler(Looper.getMainLooper());
             PackageManagerProxy.init();
+            NetflixDontKill.init();
 
             handler.postDelayed(new Runnable() {
                 @Override

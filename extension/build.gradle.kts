@@ -33,6 +33,15 @@ android {
         targetSdk {
             version = release(37)
         }
+        ndk {
+            abiFilters += listOf("arm64-v8a")
+        }
+
+        externalNativeBuild {
+            cmake {
+                cppFlags += "-std=c++17"
+            }
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
@@ -55,6 +64,12 @@ android {
             )
         }
     }
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
 }
 
 dependencies {
@@ -73,6 +88,10 @@ abstract class BuildExtensionTask : DefaultTask() {
     fun run() {
         fs.delete {
             delete("../app/src/main/assets/patches")
+        }
+        fs.copy {
+            from("src/main/assets/patches")
+            into("../app/src/main/assets/patches")
         }
         fs.copy {
             from("build/intermediates/dex/release/minifyReleaseWithR8/classes.dex")
