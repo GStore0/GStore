@@ -76,6 +76,9 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
 
+      - name: Install Android NDK
+        run: sdkmanager --install "ndk;28.2.13676358"
+
       - name: Decode Keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/keystore.jks
