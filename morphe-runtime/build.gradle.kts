@@ -2,7 +2,8 @@ plugins {
     alias(libs.plugins.android.library)
 }
 
-val morphePatcherVersionName = "2.4.0"
+val morphePatcherVersionName = "2.5.0"
+val arscLibVersion = "50418a07a8"
 
 java {
     toolchain {
@@ -51,7 +52,7 @@ android {
 dependencies {
     // morphe
     api("app.morphe:morphe-patcher:$morphePatcherVersionName")
-    api("com.github.MorpheApp:ARSCLib:50418a07a8")
+    api("com.github.MorpheApp:ARSCLib:$arscLibVersion")
 
     compileOnly(libs.androidx.core.ktx)
 }
