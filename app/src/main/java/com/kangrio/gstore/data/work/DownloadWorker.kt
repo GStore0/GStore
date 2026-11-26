@@ -28,6 +28,7 @@ import com.kangrio.gstore.extensions.isQAndAbove
 import com.kangrio.gstore.extensions.isSAndAbove
 import com.kangrio.gstore.extensions.requiresObbDir
 import com.aurora.gplayapi.data.models.PlayFile
+import com.aurora.gplayapi.exceptions.GooglePlayException
 import com.aurora.gplayapi.helpers.AuthHelper
 import com.aurora.gplayapi.helpers.PurchaseHelper
 import com.aurora.gplayapi.network.IHttpClient
@@ -319,6 +320,9 @@ class DownloadWorker @AssistedInject constructor(
      */
     private fun isRetryable(throwable: Throwable?): Boolean = when (throwable) {
         null -> false
+        is GooglePlayException.Unknown -> {
+            throwable.code == 429
+        }
         is NoNetworkException,
         is SocketException,
         is SocketTimeoutException,
@@ -343,6 +347,7 @@ class DownloadWorker @AssistedInject constructor(
                 (isRetryable(exception) || isSystemStop) &&
                 runAttemptCount < MAX_DOWNLOAD_RETRIES
             ) {
+                refreshAuthIfNeeded(exception)
                 Log.w(
                     TAG,
                     "Transient failure for ${download.packageName}, " +
@@ -747,6 +752,14 @@ class DownloadWorker @AssistedInject constructor(
         } else if (dir.usableSpace < requiredBytes) {
             throw InsufficientStorageException()
         }
+    }
+
+    private suspend fun refreshAuthIfNeeded(throwable: Throwable) {
+        if (throwable !is GooglePlayException.Unknown || throwable.code != 429) return
+
+        val all = accountRepository.getAll()
+        all.forEach { authProvider.refresh(it.id, null).isFailure }
+        authProvider.syncDefaultToPrefs()
     }
 
     private suspend fun startPatch(download: Download) {
