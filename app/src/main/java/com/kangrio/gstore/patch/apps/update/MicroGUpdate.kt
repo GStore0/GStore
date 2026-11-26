@@ -16,7 +16,8 @@ import okhttp3.Request
 
 class MicroGUpdate {
     companion object {
-        private const val ICON_BASE_URL = "https://raw.githubusercontent.com/microg"
+        private const val MICRO_REPO = "GStore0/GmsCore"
+        private const val ICON_BASE_URL = "https://raw.githubusercontent.com/$MICRO_REPO"
         private const val ICON_FILE_PATH = "src/main/res/mipmap-xxxhdpi/ic_app.png"
 
         private val json: Json = Json {
@@ -35,7 +36,7 @@ class MicroGUpdate {
 
             try {
                 val request = Request.Builder()
-                    .url("https://api.github.com/repos/microg/GmsCore/releases/latest")
+                    .url("https://api.github.com/repos/$MICRO_REPO/releases/latest")
                     .addHeader("Accept", "*/*")
                     .addHeader("User-Agent", "request")
                     .build()
@@ -78,7 +79,7 @@ class MicroGUpdate {
                 versionCode = latestGms.name.removeSuffix(".apk").split("-").last().toLong(),
                 versionName = githubRelease.tag_name,
                 displayName = "microG Services",
-                iconURL = "$ICON_BASE_URL/GmsCore/refs/heads/master/play-services-core/$ICON_FILE_PATH",
+                iconURL = "$ICON_BASE_URL/refs/heads/master/play-services-core/$ICON_FILE_PATH",
                 developerName = "microG Team",
                 fileList =  listOf(
                     PlayFile(
@@ -103,7 +104,7 @@ class MicroGUpdate {
                 versionCode = latestCompanion.name.removeSuffix(".apk").split("-").last().toLong(),
                 versionName = githubRelease.tag_name,
                 displayName = "microG Companion",
-                iconURL = "$ICON_BASE_URL/GmsCore/refs/heads/master/vending-app/$ICON_FILE_PATH",
+                iconURL = "$ICON_BASE_URL/refs/heads/master/vending-app/$ICON_FILE_PATH",
                 developerName = "microG Team",
                 fileList =  listOf(
                     PlayFile(
