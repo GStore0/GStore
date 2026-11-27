@@ -13,8 +13,8 @@ fun Context.toast(resId: Int) = runOnUiThread {
     Toast.makeText(this, resId, Toast.LENGTH_SHORT).apply { show() }
 }
 
-fun Context.toast(text: CharSequence) = runOnUiThread {
-    Toast.makeText(this, text, Toast.LENGTH_SHORT).apply { show() }
+fun Context.toast(text: CharSequence, duration: Int = Toast.LENGTH_SHORT) = runOnUiThread {
+    Toast.makeText(this, text, duration).apply { show() }
 }
 
 fun Fragment.toast(resId: Int) = requireContext().toast(resId)
