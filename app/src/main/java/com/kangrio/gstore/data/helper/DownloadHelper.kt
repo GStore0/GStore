@@ -438,7 +438,7 @@ class DownloadHelper @Inject constructor(
             .addTag(if (download.isInstalled) DOWNLOAD_UPDATE else DOWNLOAD_APP)
             .setConstraints(constraints)
             .setBackoffCriteria(
-                BackoffPolicy.EXPONENTIAL,
+                BackoffPolicy.LINEAR,
                 WorkRequest.MIN_BACKOFF_MILLIS,
                 TimeUnit.MILLISECONDS
             )
