@@ -13,12 +13,14 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.storage.StorageManager
 import android.util.Log
+import android.widget.Toast
 import androidx.core.content.getSystemService
 import androidx.core.graphics.scale
 import androidx.hilt.work.HiltWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkInfo.Companion.STOP_REASON_CANCELLED_BY_APP
 import androidx.work.WorkInfo.Companion.STOP_REASON_USER
+import androidx.work.WorkRequest
 import androidx.work.WorkerParameters
 import com.kangrio.gstore.extensions.TAG
 import com.kangrio.gstore.extensions.copyTo
@@ -47,6 +49,7 @@ import com.kangrio.gstore.data.providers.AuthProvider
 import com.kangrio.gstore.data.providers.GoogleAccountTokenProvider
 import com.kangrio.gstore.data.room.download.Download
 import com.kangrio.gstore.data.room.download.DownloadDao
+import com.kangrio.gstore.extensions.toast
 import com.kangrio.gstore.patch.util.Patcher
 import com.kangrio.gstore.util.CertUtil
 import com.kangrio.gstore.util.NotificationUtil
@@ -352,6 +355,13 @@ class DownloadWorker @AssistedInject constructor(
                     TAG,
                     "Transient failure for ${download.packageName}, " +
                         "retrying (attempt $runAttemptCount)"
+                )
+
+                val nextDelaySec = WorkRequest.MIN_BACKOFF_MILLIS * (runAttemptCount + 1) / 1000
+                context.toast(
+                    "Transient failure for ${download.displayName}, " +
+                            "retrying (attempt ${runAttemptCount + 1}) in $nextDelaySec seconds",
+                    Toast.LENGTH_LONG
                 )
                 return@withContext Result.retry()
             }
